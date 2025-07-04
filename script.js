@@ -1,4 +1,3 @@
-
 class SquidGameSimulator {
     constructor() {
         this.scene = null;
@@ -11,7 +10,7 @@ class SquidGameSimulator {
         this.playersAlive = 456;
         this.dollLookingBack = false;
         this.lightState = 'green';
-        this.playerPosition = { x: 0, z: 45 };
+        this.playerPosition = { x: 0, z: 40 };
         this.playerVelocity = { x: 0, z: 0 };
         this.keys = {};
         this.mouseLocked = false;
@@ -27,16 +26,16 @@ class SquidGameSimulator {
         this.countdownTime = 5;
         this.eliminatedPlayers = [];
         this.playerProfiles = this.generatePlayerProfiles();
-        
+
         // Configuraciones del usuario
         this.settings = {
             announcements: true,
             visualAnnouncements: true,
             eliminationEffects: true
         };
-        
-        
-        
+
+
+
         // Load voices when available
         if (this.speechSynth) {
             if (this.speechSynth.getVoices().length === 0) {
@@ -93,7 +92,7 @@ class SquidGameSimulator {
 
     setupCamera() {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.set(0, 1.8, 47);
+        this.camera.position.set(0, 1.8, 42);
         this.camera.rotation.order = 'YXZ';
     }
 
@@ -177,7 +176,7 @@ class SquidGameSimulator {
             const y = Math.random() * 512;
             const size = Math.random() * 2 + 0.5;
             const opacity = Math.random() * 0.4 + 0.1;
-            
+
             ctx.fillStyle = `rgba(${101 + Math.random() * 50}, ${83 + Math.random() * 40}, ${45 + Math.random() * 30}, ${opacity})`;
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -190,7 +189,7 @@ class SquidGameSimulator {
             const y = Math.random() * 512;
             const length = Math.random() * 80 + 30;
             const angle = Math.random() * Math.PI * 2;
-            
+
             ctx.strokeStyle = `rgba(70, 60, 40, ${Math.random() * 0.5 + 0.2})`;
             ctx.lineWidth = Math.random() * 3 + 1;
             ctx.beginPath();
@@ -203,7 +202,7 @@ class SquidGameSimulator {
         for (let i = 0; i < 30; i++) {
             const x = Math.random() * 512;
             const y = Math.random() * 512;
-            
+
             ctx.fillStyle = `rgba(60, 50, 30, ${Math.random() * 0.4 + 0.2})`;
             ctx.beginPath();
             ctx.ellipse(x, y, 10, 15, Math.random() * Math.PI, 0, Math.PI * 2);
@@ -276,18 +275,18 @@ class SquidGameSimulator {
             for (let i = 0; i < 15; i++) {
                 const grassBlade = new THREE.CylinderGeometry(0.02, 0.01, 0.3 + Math.random() * 0.4);
                 const grass = new THREE.Mesh(grassBlade, material);
-                
+
                 // Random position within the patch area
                 grass.position.set(
                     x + (Math.random() - 0.5) * 4,
                     0.2,
                     z + (Math.random() - 0.5) * 4
                 );
-                
+
                 // Random rotation
                 grass.rotation.x = (Math.random() - 0.5) * 0.3;
                 grass.rotation.z = (Math.random() - 0.5) * 0.3;
-                
+
                 this.scene.add(grass);
             }
         };
@@ -297,7 +296,7 @@ class SquidGameSimulator {
         createGrassPatch(22, -47, dryGrassMaterial); // Back right corner
         createGrassPatch(-22, 47, grassMaterial); // Front left corner
         createGrassPatch(22, 47, dryGrassMaterial); // Front right corner
-        
+
         // Add some patches along the walls
         createGrassPatch(-20, -20, dryGrassMaterial);
         createGrassPatch(20, -20, grassMaterial);
@@ -444,7 +443,7 @@ class SquidGameSimulator {
         rightLeg.castShadow = true;
         playerGroup.add(rightLeg);
 
-        playerGroup.position.set(0, 0, 45);
+        playerGroup.position.set(0, 0, 40);
         this.scene.add(playerGroup);
         this.player = playerGroup;
     }
@@ -546,7 +545,7 @@ class SquidGameSimulator {
         this.targetRotationY = 0;
         this.cameraSensitivity = 0.002;
         this.cameraSmoothing = 0.1;
-        
+
         // Variables para touch controls
         this.isTouchDevice = 'ontouchstart' in window;
         this.touchStartX = 0;
@@ -598,14 +597,14 @@ class SquidGameSimulator {
     setupTouchControls() {
         // Crear joystick virtual para movimiento
         this.createVirtualJoystick();
-        
+
         // Área de rotación de cámara (toda la pantalla menos el joystick)
         document.addEventListener('touchstart', (e) => {
             if (this.gameState !== 'playing') return;
-            
+
             const touch = e.touches[0];
             const joystickArea = document.getElementById('virtual-joystick');
-            
+
             if (!joystickArea.contains(e.target)) {
                 this.touchStartX = touch.clientX;
                 this.touchStartY = touch.clientY;
@@ -616,18 +615,18 @@ class SquidGameSimulator {
 
         document.addEventListener('touchmove', (e) => {
             if (this.gameState !== 'playing' || !this.touchRotating) return;
-            
+
             const touch = e.touches[0];
             const deltaX = touch.clientX - this.touchStartX;
             const deltaY = touch.clientY - this.touchStartY;
-            
+
             this.targetRotationY -= deltaX * this.cameraSensitivity * 2;
             this.targetRotationX -= deltaY * this.cameraSensitivity * 2;
             this.targetRotationX = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.targetRotationX));
-            
+
             this.touchStartX = touch.clientX;
             this.touchStartY = touch.clientY;
-            
+
             e.preventDefault();
         }, { passive: false });
 
@@ -643,21 +642,21 @@ class SquidGameSimulator {
             </div>
             <div id="run-button" class="run-button">🏃‍♂️</div>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', joystickHTML);
-        
+
         const joystick = document.getElementById('virtual-joystick');
         const knob = document.getElementById('joystick-knob');
         const runButton = document.getElementById('run-button');
-        
+
         let joystickActive = false;
         let joystickCenterX = 0;
         let joystickCenterY = 0;
-        
+
         // Joystick touch events
         joystick.addEventListener('touchstart', (e) => {
             if (this.gameState !== 'playing') return;
-            
+
             joystickActive = true;
             const rect = joystick.getBoundingClientRect();
             joystickCenterX = rect.left + rect.width / 2;
@@ -667,13 +666,13 @@ class SquidGameSimulator {
 
         document.addEventListener('touchmove', (e) => {
             if (!joystickActive || this.gameState !== 'playing') return;
-            
+
             const touch = e.touches[0];
             const deltaX = touch.clientX - joystickCenterX;
             const deltaY = touch.clientY - joystickCenterY;
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             const maxDistance = 40;
-            
+
             if (distance <= maxDistance) {
                 knob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
             } else {
@@ -682,17 +681,17 @@ class SquidGameSimulator {
                 const y = Math.sin(angle) * maxDistance;
                 knob.style.transform = `translate(${x}px, ${y}px)`;
             }
-            
+
             // Convertir a movimiento del jugador
             const normalizedX = Math.max(-1, Math.min(1, deltaX / maxDistance));
             const normalizedY = Math.max(-1, Math.min(1, deltaY / maxDistance));
-            
+
             // Simular teclas presionadas
             this.keys['KeyW'] = normalizedY < -0.3;
             this.keys['KeyS'] = normalizedY > 0.3;
             this.keys['KeyA'] = normalizedX < -0.3;
             this.keys['KeyD'] = normalizedX > 0.3;
-            
+
             e.preventDefault();
         }, { passive: false });
 
@@ -722,10 +721,10 @@ class SquidGameSimulator {
         const settingsButton = document.getElementById('settings-button');
         const settingsMenu = document.getElementById('settings-menu');
         const closeSettings = document.getElementById('close-settings');
-        
+
         // Cargar configuraciones guardadas
         this.loadSettings();
-        
+
         // Botón de configuración con toggle
         settingsButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -772,7 +771,7 @@ class SquidGameSimulator {
         if (saved) {
             this.settings = { ...this.settings, ...JSON.parse(saved) };
         }
-        
+
         // Aplicar configuraciones a los checkboxes
         document.getElementById('toggle-announcements').checked = this.settings.announcements;
         document.getElementById('toggle-visual-announcements').checked = this.settings.visualAnnouncements;
@@ -804,10 +803,10 @@ class SquidGameSimulator {
     setupAudio() {
         // Create audio context and sounds
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
+
         // Setup YouTube audio
         this.setupYouTubeAudio();
-        
+
         // Setup speech synthesis
         this.setupVoiceAnnouncements();
     }
@@ -836,12 +835,12 @@ class SquidGameSimulator {
         // Voice synthesis disabled - only visual announcements
     }
 
-    
+
 
     makeAnnouncement(text, showVisual = true) {
         // Verificar configuraciones antes de mostrar anuncios
         if (!this.settings.announcements) return;
-        
+
         // Show visual announcement only
         if (showVisual && this.settings.visualAnnouncements) {
             this.showAnnouncementText(text);
@@ -852,10 +851,10 @@ class SquidGameSimulator {
     showAnnouncementText(text) {
         const container = document.getElementById('announcement-container');
         const textElement = document.getElementById('announcement-text');
-        
+
         textElement.textContent = text;
         container.classList.add('show');
-        
+
         // Hide after 4 seconds
         setTimeout(() => {
             container.classList.remove('show');
@@ -883,10 +882,10 @@ class SquidGameSimulator {
 
     startGame() {
         this.gameState = 'preparing';
-        
+
         // Solo un anuncio inicial
         this.makeAnnouncement(`¡Luz Roja, Luz Verde! Cruza la línea en 2 minutos.`);
-        
+
         // Iniciar cuenta regresiva directamente después de 3 segundos
         setTimeout(() => {
             this.startCountdown();
@@ -896,7 +895,7 @@ class SquidGameSimulator {
     startCountdown() {
         this.countdownActive = true;
         this.countdownTime = 5;
-        
+
         const countdownInterval = setInterval(() => {
             if (this.countdownTime > 0) {
                 this.makeAnnouncement(`¡El juego comienza en ${this.countdownTime}!`);
@@ -1079,7 +1078,7 @@ class SquidGameSimulator {
         }
         if (this.keys['KeyD'] || this.keys['ArrowRight']) {
             this.playerPosition.z += speed * Math.sin(this.camera.rotation.y);
-            this.playerPosition.x -= speed * Math.cos(this.camera.rotation.y);
+            this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
             moved = true;
         }
 
@@ -1135,7 +1134,7 @@ class SquidGameSimulator {
     createEliminationEffect() {
         // Solo mostrar efectos si está habilitado en configuración
         if (!this.settings.eliminationEffects) return;
-        
+
         // Create diamond shatter effect
         const effectContainer = document.createElement('div');
         effectContainer.className = 'elimination-effect';
@@ -1177,7 +1176,7 @@ class SquidGameSimulator {
     showEliminatedPlayers() {
         const eliminatedContainer = document.createElement('div');
         eliminatedContainer.className = 'eliminated-players-container';
-        
+
         this.eliminatedPlayers.slice(-5).forEach((player, index) => {
             const playerCard = document.createElement('div');
             playerCard.className = 'eliminated-player-card';
@@ -1192,7 +1191,7 @@ class SquidGameSimulator {
         });
 
         document.body.appendChild(eliminatedContainer);
-        
+
         setTimeout(() => {
             eliminatedContainer.remove();
         }, 5000);
@@ -1200,7 +1199,7 @@ class SquidGameSimulator {
 
     playEliminationSound() {
         if (!this.audioContext) return;
-        
+
         // Create dramatic elimination sound
         const frequencies = [440, 330, 277, 220];
         frequencies.forEach((freq, index) => {
@@ -1260,7 +1259,7 @@ class SquidGameSimulator {
         this.playersAlive = 456;
         this.lightState = 'green';
         this.dollLookingBack = false;
-        this.playerPosition = { x: 0, z: 45 };
+        this.playerPosition = { x: 0, z: 40 };
 
         // Reset UI
         document.getElementById('timer').textContent = this.gameTime;
@@ -1269,8 +1268,8 @@ class SquidGameSimulator {
         document.getElementById('victory-screen').classList.add('hidden');
 
         // Reset player position
-        this.player.position.set(0, 0, 45);
-        this.camera.position.set(0, 1.8, 47);
+        this.player.position.set(0, 0, 40);
+        this.camera.position.set(0, 1.8, 42);
         this.camera.rotation.set(0, 0, 0);
 
         // Reset doll
