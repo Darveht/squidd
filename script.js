@@ -1958,10 +1958,11 @@ class SquidGameSimulator {
             } else {
                 clearInterval(countdownInterval);
                 this.countdownActive = false;
-                this.makeAnnouncement("¡Escucha las instrucciones de la corneta antes de comenzar!");
-                this.gameState = 'waiting_for_announcement';
-                this.updateLightState('red'); // Mantener luz roja durante anuncio
-                this.startAnnouncementAudio();
+                this.makeAnnouncement("¡El juego ha comenzado! Puedes moverte.");
+                this.gameState = 'playing';
+                this.updateLightState('green');
+                this.startGameLoop();
+                this.startAnnouncementAudio(); // Solo para efectos de audio
             }
         }, 1000);
     }
@@ -2144,12 +2145,6 @@ class SquidGameSimulator {
         // Boundary checking
         this.playerPosition.x = Math.max(-24, Math.min(24, this.playerPosition.x));
         this.playerPosition.z = Math.max(-44, Math.min(45, this.playerPosition.z));
-
-        // Durante el anuncio, no permitir cruzar la línea de salida
-        if (this.gameState === 'waiting_for_announcement' && this.playerPosition.z < 38) {
-            this.playerPosition.z = 38;
-            this.makeAnnouncement("¡Espera a que termine el anuncio antes de comenzar!");
-        }
 
         // Check for movement during red light (solo durante el juego activo)
         if (this.gameState === 'playing' && moved && this.lightState === 'red' && this.dollLookingBack) {
