@@ -800,10 +800,10 @@ class SquidGameSimulator {
             const normalizedY = Math.max(-1, Math.min(1, deltaY / maxDistance));
 
             // Simular teclas presionadas con mayor sensibilidad
-            this.keys['KeyW'] = normalizedY < -0.15; // Más sensible
-            this.keys['KeyS'] = normalizedY > 0.15;  // Más sensible
-            this.keys['KeyA'] = normalizedX < -0.15; // Más sensible
-            this.keys['KeyD'] = normalizedX > 0.15;  // Más sensible
+            this.keys['KeyW'] = normalizedY < -0.1; // Adelante (hacia arriba en joystick)
+            this.keys['KeyS'] = normalizedY > 0.1;  // Atrás (hacia abajo en joystick) 
+            this.keys['KeyA'] = normalizedX < -0.1; // Izquierda
+            this.keys['KeyD'] = normalizedX > 0.1;  // Derecha
 
             e.preventDefault();
         }, { passive: false });
@@ -1175,47 +1175,26 @@ class SquidGameSimulator {
         let moved = false;
         const previousPosition = { ...this.playerPosition };
 
-        // Movement - different logic for mobile vs desktop
-        if (this.isTouchDevice) {
-            // Mobile: absolute movement directions
-            if (this.keys['KeyW'] || this.keys['ArrowUp']) {
-                this.playerPosition.z -= speed; // Move forward (towards doll)
-                moved = true;
-            }
-            if (this.keys['KeyS'] || this.keys['ArrowDown']) {
-                this.playerPosition.z += speed; // Move backward (away from doll)
-                moved = true;
-            }
-            if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
-                this.playerPosition.x -= speed; // Move left
-                moved = true;
-            }
-            if (this.keys['KeyD'] || this.keys['ArrowRight']) {
-                this.playerPosition.x += speed; // Move right
-                moved = true;
-            }
-        } else {
-            // Desktop: camera-relative movement
-            if (this.keys['KeyW'] || this.keys['ArrowUp']) {
-                this.playerPosition.z -= speed * Math.cos(this.camera.rotation.y);
-                this.playerPosition.x -= speed * Math.sin(this.camera.rotation.y);
-                moved = true;
-            }
-            if (this.keys['KeyS'] || this.keys['ArrowDown']) {
-                this.playerPosition.z += speed * Math.cos(this.camera.rotation.y);
-                this.playerPosition.x += speed * Math.sin(this.camera.rotation.y);
-                moved = true;
-            }
-            if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
-                this.playerPosition.z -= speed * Math.sin(this.camera.rotation.y);
-                this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
-                moved = true;
-            }
-            if (this.keys['KeyD'] || this.keys['ArrowRight']) {
-                this.playerPosition.z += speed * Math.sin(this.camera.rotation.y);
-                this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
-                moved = true;
-            }
+        // Movimiento simple y directo - igual para móvil y escritorio
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) {
+            // Adelante = hacia la muñeca (reducir Z)
+            this.playerPosition.z -= speed;
+            moved = true;
+        }
+        if (this.keys['KeyS'] || this.keys['ArrowDown']) {
+            // Atrás = alejarse de la muñeca (aumentar Z)
+            this.playerPosition.z += speed;
+            moved = true;
+        }
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
+            // Izquierda = reducir X
+            this.playerPosition.x -= speed;
+            moved = true;
+        }
+        if (this.keys['KeyD'] || this.keys['ArrowRight']) {
+            // Derecha = aumentar X
+            this.playerPosition.x += speed;
+            moved = true;
         }
 
         // Boundary checking
