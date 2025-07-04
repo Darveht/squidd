@@ -1220,20 +1220,8 @@ class SquidGameSimulator {
     }
 
     startCinematicIntro() {
-        this.gameState = 'cinematic';
-        this.cinematicActive = true;
-        
-        // Crear overlay cinematográfico con vista 3D
-        this.createCinematicOverlay();
-        
-        // Configurar y reproducir video (solo audio)
-        this.setupCinematicVideo();
-        
-        // Iniciar sistema de subtítulos
-        this.startSubtitleSystem();
-        
-        // Posicionar cámara para vista cinematográfica
-        this.setupCinematicCamera();
+        // Ir directamente al juego sin pantalla cinematográfica
+        this.startGame();
     }
 
     createCinematicOverlay() {
@@ -1311,53 +1299,86 @@ class SquidGameSimulator {
         requestAnimationFrame(animateCamera);
     }
 
-    setupCinematicVideo() {
-        this.cinematicVideo = document.getElementById('cinematic-video');
+    startAnnouncementAudio() {
+        // Crear elemento de audio para reproducir el video
+        this.announcementAudio = document.createElement('audio');
+        this.announcementAudio.src = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&dl=1';
+        this.announcementAudio.volume = 0.8;
+        this.announcementAudio.preload = 'auto';
         
-        this.cinematicVideo.addEventListener('canplay', () => {
-            console.log('Video listo para reproducir (solo audio)');
-            // Reproducir solo el audio, video oculto
-            this.cinematicVideo.volume = 0.8; // Volumen alto para el audio
-            this.cinematicVideo.play().catch(error => {
-                console.log('Error al reproducir video:', error);
-                // Si falla el video, continuar sin él
-                this.skipCinematic();
+        // Eventos del audio
+        this.announcementAudio.addEventListener('canplay', () => {
+            console.log('Audio de anuncio listo para reproducir');
+            this.announcementAudio.play().catch(error => {
+                console.log('Error al reproducir audio:', error);
+                // Si falla, continuar sin audio después de 40 segundos
+                setTimeout(() => {
+                    this.startActualGame();
+                }, 40000);
             });
         });
         
-        this.cinematicVideo.addEventListener('ended', () => {
-            console.log('Video terminado, iniciando juego');
-            this.skipCinematic();
+        this.announcementAudio.addEventListener('ended', () => {
+            console.log('Anuncio terminado, iniciando juego real');
+            this.startActualGame();
         });
         
-        this.cinematicVideo.addEventListener('error', (e) => {
-            console.log('Error en el video:', e);
-            // Si hay error, continuar sin video después de 40 segundos
+        this.announcementAudio.addEventListener('error', (e) => {
+            console.log('Error en el audio:', e);
+            // Si hay error, continuar sin audio después de 40 segundos
             setTimeout(() => {
-                this.skipCinematic();
+                this.startActualGame();
             }, 40000);
         });
         
-        // Configurar video para solo audio
-        this.cinematicVideo.muted = false; // Asegurar que no esté silenciado
-        this.cinematicVideo.load();
+        // Iniciar sistema de subtítulos
+        this.startSubtitleSystem();
+        
+        // Cargar el audio
+        this.announcementAudio.load();
+    }
+
+    startActualGame() {
+        this.gameState = 'playing';
+        this.updateLightState('green');
+        this.makeAnnouncement("¡AHORA SÍ PUEDEN COMENZAR!");
+        this.startGameLoop();
+        
+        // Limpiar audio
+        if (this.announcementAudio) {
+            this.announcementAudio.pause();
+            this.announcementAudio = null;
+        }
+        
+        if (this.subtitleInterval) {
+            clearInterval(this.subtitleInterval);
+        }
     }
 
     startSubtitleSystem() {
+        // Mostrar contenedor de subtítulos
+        const subtitleContainer = document.createElement('div');
+        subtitleContainer.id = 'subtitle-container-game';
+        subtitleContainer.className = 'subtitle-container';
+        subtitleContainer.innerHTML = '<div id="subtitle-text-game" class="subtitle-text"></div>';
+        document.getElementById('ui-overlay').appendChild(subtitleContainer);
+        
         this.subtitleInterval = setInterval(() => {
-            if (!this.cinematicActive) {
+            if (this.gameState !== 'waiting_for_announcement') {
                 clearInterval(this.subtitleInterval);
+                const container = document.getElementById('subtitle-container-game');
+                if (container) container.remove();
                 return;
             }
             
-            const currentTime = this.cinematicVideo ? this.cinematicVideo.currentTime : Date.now() / 1000;
+            const currentTime = this.announcementAudio ? this.announcementAudio.currentTime : 0;
             this.updateSubtitles(currentTime);
         }, 100);
     }
 
     updateSubtitles(currentTime) {
-        const subtitleContainer = document.getElementById('subtitle-container');
-        const subtitleText = document.getElementById('subtitle-text');
+        const subtitleContainer = document.getElementById('subtitle-container-game');
+        const subtitleText = document.getElementById('subtitle-text-game');
         
         if (!subtitleContainer || !subtitleText) return;
         
@@ -1369,11 +1390,30 @@ class SquidGameSimulator {
             if (subtitleText.textContent !== currentSubtitle.text) {
                 subtitleText.textContent = currentSubtitle.text;
                 subtitleContainer.classList.add('show-subtitle');
-                this.animateSubtitleText();
+                this.animateSubtitleTextGame();
             }
         } else {
             subtitleContainer.classList.remove('show-subtitle');
         }
+    }
+
+    animateSubtitleTextGame() {
+        const subtitleText = document.getElementById('subtitle-text-game');
+        if (!subtitleText) return;
+        
+        // Efecto de escritura tipo máquina
+        const text = subtitleText.textContent;
+        subtitleText.textContent = '';
+        
+        let i = 0;
+        const typeWriter = setInterval(() => {
+            if (i < text.length) {
+                subtitleText.textContent += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(typeWriter);
+            }
+        }, 50);
     }
 
     animateSubtitleText() {
@@ -1447,10 +1487,10 @@ class SquidGameSimulator {
             } else {
                 clearInterval(countdownInterval);
                 this.countdownActive = false;
-                this.makeAnnouncement("¡COMIENZA AHORA!");
-                this.gameState = 'playing';
-                this.updateLightState('green');
-                this.startGameLoop();
+                this.makeAnnouncement("¡Escucha las instrucciones de la corneta antes de comenzar!");
+                this.gameState = 'waiting_for_announcement';
+                this.updateLightState('red'); // Mantener luz roja durante anuncio
+                this.startAnnouncementAudio();
             }
         }, 1000);
     }
@@ -1599,7 +1639,7 @@ class SquidGameSimulator {
     }
 
     updatePlayer() {
-        if (this.gameState !== 'playing') return;
+        if (this.gameState !== 'playing' && this.gameState !== 'waiting_for_announcement') return;
 
         const speed = this.keys['ShiftLeft'] || this.keys['ShiftRight'] ? 0.12 : 0.06;
         let moved = false;
@@ -1634,14 +1674,20 @@ class SquidGameSimulator {
         this.playerPosition.x = Math.max(-24, Math.min(24, this.playerPosition.x));
         this.playerPosition.z = Math.max(-44, Math.min(45, this.playerPosition.z));
 
-        // Check for movement during red light
-        if (moved && this.lightState === 'red' && this.dollLookingBack) {
+        // Durante el anuncio, no permitir cruzar la línea de salida
+        if (this.gameState === 'waiting_for_announcement' && this.playerPosition.z < 38) {
+            this.playerPosition.z = 38;
+            this.makeAnnouncement("¡Espera a que termine el anuncio antes de comenzar!");
+        }
+
+        // Check for movement during red light (solo durante el juego activo)
+        if (this.gameState === 'playing' && moved && this.lightState === 'red' && this.dollLookingBack) {
             this.endGame('caught');
             return;
         }
 
-        // Check for victory
-        if (this.playerPosition.z <= -44) {
+        // Check for victory (solo durante el juego activo)
+        if (this.gameState === 'playing' && this.playerPosition.z <= -44) {
             this.endGame('victory');
             return;
         }
