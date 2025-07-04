@@ -1378,413 +1378,132 @@ class SquidGameSimulator {
     }
 
     startAnnouncementAudio() {
-        console.log('Iniciando anuncio de la corneta...');
+        console.log('🔊 INICIANDO VIDEO DESDE LA CORNETA');
         
-        // Crear y reproducir el video real desde Dropbox
-        this.createAndPlayAnnouncementVideo();
+        // Crear video directamente y reproducir
+        this.createCornetaVideo();
         
-        // Iniciar sistema de subtítulos inmediatamente
+        // Iniciar subtítulos al mismo tiempo
         this.startSubtitleSystem();
         
-        // El anuncio durará 38 segundos (duración total de los subtítulos)
+        // Finalizar después de 38 segundos
         setTimeout(() => {
-            console.log('Anuncio terminado, iniciando juego real');
             this.startActualGame();
         }, 38000);
     }
     
-    createAndPlayAnnouncementVideo() {
-        console.log('Creando reproductor de video desde Dropbox...');
-        
-        // Crear elemento de video oculto pero funcional
-        if (this.announcementVideo) {
-            this.announcementVideo.remove();
+    createCornetaVideo() {
+        // Limpiar video anterior si existe
+        if (this.cornetaVideo) {
+            this.cornetaVideo.remove();
         }
         
-        this.announcementVideo = document.createElement('video');
-        this.announcementVideo.id = 'announcement-video';
-        this.announcementVideo.style.position = 'absolute';
-        this.announcementVideo.style.top = '-9999px';
-        this.announcementVideo.style.left = '-9999px';
-        this.announcementVideo.style.width = '1px';
-        this.announcementVideo.style.height = '1px';
-        this.announcementVideo.style.opacity = '0';
-        this.announcementVideo.style.pointerEvents = 'none';
-        this.announcementVideo.preload = 'auto';
-        this.announcementVideo.controls = false;
-        this.announcementVideo.muted = false;
-        this.announcementVideo.volume = 1.0; // Volumen máximo
-        this.announcementVideo.crossOrigin = 'anonymous';
+        // Crear elemento de video
+        this.cornetaVideo = document.createElement('video');
+        this.cornetaVideo.style.position = 'absolute';
+        this.cornetaVideo.style.top = '-9999px';
+        this.cornetaVideo.style.left = '-9999px';
+        this.cornetaVideo.style.width = '1px';
+        this.cornetaVideo.style.height = '1px';
+        this.cornetaVideo.style.opacity = '0';
+        this.cornetaVideo.autoplay = true;
+        this.cornetaVideo.controls = false;
+        this.cornetaVideo.muted = false;
+        this.cornetaVideo.volume = 1.0;
+        this.cornetaVideo.preload = 'auto';
         
-        // URL directa de descarga de Dropbox
-        const videoUrl = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=yz2ze6h6&dl=1';
+        // URL del video de Dropbox
+        this.cornetaVideo.src = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=yz2ze6h6&dl=1';
         
-        this.announcementVideo.src = videoUrl;
+        // Agregar al DOM
+        document.body.appendChild(this.cornetaVideo);
         
-        // Agregar al DOM inmediatamente
-        document.body.appendChild(this.announcementVideo);
-        
-        // Configurar eventos del video
-        this.announcementVideo.addEventListener('canplay', () => {
-            console.log('Video listo para reproducir, iniciando...');
-            this.playVideoWithSpeakerEffect();
-        });
-
-        this.announcementVideo.addEventListener('loadedmetadata', () => {
-            console.log('Metadata del video cargada');
-            // Intentar reproducir inmediatamente
-            this.attemptVideoPlay();
+        // Eventos del video
+        this.cornetaVideo.addEventListener('canplay', () => {
+            console.log('✅ Video listo, reproduciendo desde corneta...');
+            this.playCornetaVideo();
         });
         
-        this.announcementVideo.addEventListener('error', (e) => {
-            console.error('Error cargando video:', e, this.announcementVideo.error);
-            // Fallback inmediato al sistema de sonido artificial
-            this.createSpeakerAnnouncementSound();
+        this.cornetaVideo.addEventListener('play', () => {
+            console.log('🔊 ¡VIDEO SONANDO DESDE LA CORNETA!');
+            this.activateSpeakerVisuals();
         });
         
-        this.announcementVideo.addEventListener('ended', () => {
-            console.log('Video terminado');
-            this.cleanupAnnouncementVideo();
-        });
-
-        this.announcementVideo.addEventListener('play', () => {
-            console.log('VIDEO REPRODUCIENDO DESDE LA CORNETA! 🔊');
+        this.cornetaVideo.addEventListener('error', (e) => {
+            console.error('❌ Error con video:', e);
         });
         
-        // Cargar el video con retry automático
-        this.loadVideoWithRetry();
+        this.cornetaVideo.addEventListener('ended', () => {
+            console.log('🔇 Video terminado');
+            this.cleanupCornetaVideo();
+        });
         
-        // Crear efectos visuales de sonido desde la corneta
-        this.createSpeakerSoundEffects();
+        // Cargar video
+        this.cornetaVideo.load();
     }
     
-    loadVideoWithRetry() {
-        let retryCount = 0;
-        const maxRetries = 3;
+    playCornetaVideo() {
+        if (!this.cornetaVideo) return;
         
-        const attemptLoad = () => {
-            try {
-                this.announcementVideo.load();
-                console.log(`Intento de carga ${retryCount + 1}/${maxRetries}`);
-                
-                // Timeout para retry si no carga
-                setTimeout(() => {
-                    if (this.announcementVideo.readyState < 2 && retryCount < maxRetries - 1) {
-                        retryCount++;
-                        console.log(`Reintentando carga del video...`);
-                        attemptLoad();
-                    } else if (this.announcementVideo.readyState < 2) {
-                        console.log('Video no se pudo cargar, usando fallback');
-                        this.createSpeakerAnnouncementSound();
-                    }
-                }, 3000);
-                
-            } catch (error) {
-                console.error('Error en carga de video:', error);
-                if (retryCount < maxRetries - 1) {
-                    retryCount++;
-                    setTimeout(attemptLoad, 1000);
-                } else {
-                    this.createSpeakerAnnouncementSound();
-                }
-            }
-        };
+        const playPromise = this.cornetaVideo.play();
         
-        attemptLoad();
-    }
-    
-    attemptVideoPlay() {
-        if (!this.announcementVideo) return;
-        
-        // Múltiples intentos de reproducción
-        const playAttempts = [
-            () => this.announcementVideo.play(),
-            () => {
-                this.announcementVideo.muted = true;
-                return this.announcementVideo.play().then(() => {
-                    this.announcementVideo.muted = false;
-                });
-            },
-            () => {
-                // Forzar interacción del usuario simulada
-                const playPromise = this.announcementVideo.play();
-                return playPromise;
-            }
-        ];
-        
-        let attemptIndex = 0;
-        
-        const tryPlay = () => {
-            if (attemptIndex >= playAttempts.length) {
-                console.log('Todos los intentos de reproducción fallaron, usando fallback');
-                this.createSpeakerAnnouncementSound();
-                return;
-            }
-            
-            const attempt = playAttempts[attemptIndex];
-            attemptIndex++;
-            
-            try {
-                const playPromise = attempt();
-                
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            console.log(`✅ VIDEO REPRODUCIÉNDOSE DESDE LA CORNETA! Intento ${attemptIndex}`);
-                            this.applySpeakerEffects();
-                        })
-                        .catch((error) => {
-                            console.log(`Intento ${attemptIndex} falló:`, error);
-                            setTimeout(tryPlay, 500);
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('🎯 REPRODUCIENDO AUDIO ORIGINAL DEL VIDEO');
+                })
+                .catch((error) => {
+                    console.log('Reintentando reproducción...', error);
+                    // Retry con user interaction
+                    setTimeout(() => {
+                        this.cornetaVideo.muted = true;
+                        this.cornetaVideo.play().then(() => {
+                            this.cornetaVideo.muted = false;
                         });
-                } else {
-                    console.log(`✅ VIDEO REPRODUCIÉNDOSE DESDE LA CORNETA! Intento ${attemptIndex}`);
-                    this.applySpeakerEffects();
-                }
-            } catch (error) {
-                console.log(`Error en intento ${attemptIndex}:`, error);
-                setTimeout(tryPlay, 500);
-            }
-        };
-        
-        // Comenzar intentos después de un pequeño delay
-        setTimeout(tryPlay, 100);
-    }
-    
-    playVideoWithSpeakerEffect() {
-        this.attemptVideoPlay();
-    }
-    
-    applySpeakerEffects() {
-        try {
-            if (!this.audioContext) {
-                // Crear contexto de audio si no existe
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            
-            // Reanudar contexto si está suspendido
-            if (this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
-            }
-            
-            if (this.announcementVideo && !this.audioSource) {
-                // Crear fuente de audio desde el video
-                this.audioSource = this.audioContext.createMediaElementSource(this.announcementVideo);
-                
-                // Filtros para simular sonido de corneta/altavoz profesional
-                const highPassFilter = this.audioContext.createBiquadFilter();
-                highPassFilter.type = 'highpass';
-                highPassFilter.frequency.value = 200; // Eliminar graves profundos
-                highPassFilter.Q.value = 0.5;
-                
-                const lowPassFilter = this.audioContext.createBiquadFilter();
-                lowPassFilter.type = 'lowpass';
-                lowPassFilter.frequency.value = 8000; // Cortar frecuencias muy altas
-                lowPassFilter.Q.value = 0.8;
-                
-                const midBandFilter = this.audioContext.createBiquadFilter();
-                midBandFilter.type = 'peaking';
-                midBandFilter.frequency.value = 2500; // Enfatizar frecuencias de voz
-                midBandFilter.Q.value = 1.5;
-                midBandFilter.gain.value = 6; // +6dB de ganancia en medios
-                
-                // Compressor agresivo para simular limitación de altavoz
-                const compressor = this.audioContext.createDynamicsCompressor();
-                compressor.threshold.value = -18;
-                compressor.knee.value = 30;
-                compressor.ratio.value = 8;
-                compressor.attack.value = 0.001;
-                compressor.release.value = 0.1;
-                
-                // Distorsión suave para simular altavoz sobrecargado
-                const waveshaper = this.audioContext.createWaveShaper();
-                waveshaper.curve = this.createDistortionCurve(15);
-                waveshaper.oversample = '2x';
-                
-                // Ganancia final alta para simular corneta potente
-                const masterGain = this.audioContext.createGain();
-                masterGain.gain.value = 1.8; // Volumen muy alto
-                
-                // Reverb para simular espacio abierto
-                const convolver = this.audioContext.createConvolver();
-                convolver.buffer = this.createImpulseResponse(2, 2, false);
-                
-                const dryGain = this.audioContext.createGain();
-                dryGain.gain.value = 0.8;
-                
-                const wetGain = this.audioContext.createGain();
-                wetGain.gain.value = 0.3;
-                
-                // Conectar la cadena de efectos completa
-                this.audioSource.connect(highPassFilter);
-                highPassFilter.connect(midBandFilter);
-                midBandFilter.connect(lowPassFilter);
-                lowPassFilter.connect(compressor);
-                compressor.connect(waveshaper);
-                waveshaper.connect(dryGain);
-                
-                // Rama de reverb
-                waveshaper.connect(convolver);
-                convolver.connect(wetGain);
-                
-                // Mezclar dry y wet
-                dryGain.connect(masterGain);
-                wetGain.connect(masterGain);
-                masterGain.connect(this.audioContext.destination);
-                
-                console.log('🔊 EFECTOS DE CORNETA APLICADOS - SONIDO POTENTE ACTIVADO');
-                
-                // Animación de ondas sonoras más intensa
-                this.intensifySpeakerVisualEffects();
-            }
-            
-        } catch (error) {
-            console.error('Error aplicando efectos de corneta:', error);
-            // Asegurar que el video se reproduzca sin efectos si hay error
-            if (this.announcementVideo) {
-                this.announcementVideo.volume = 0.9;
-            }
+                    }, 100);
+                });
         }
     }
     
-    createDistortionCurve(amount) {
-        const samples = 44100;
-        const curve = new Float32Array(samples);
-        const deg = Math.PI / 180;
-        
-        for (let i = 0; i < samples; i++) {
-            const x = (i * 2) / samples - 1;
-            curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
-        }
-        
-        return curve;
-    }
-    
-    intensifySpeakerVisualEffects() {
-        // Efectos visuales más intensos cuando el audio está reproduciéndose
+    activateSpeakerVisuals() {
+        // Solo efectos visuales en la corneta, NO modificar el audio
         if (this.speakerNearDoll) {
             // Hacer que las luces LED parpadeen
-            const leds = this.speakerNearDoll.children.filter(child => 
-                child.geometry && child.geometry.type === 'SphereGeometry' && child.position.y > 1
-            );
-            
-            leds.forEach((led, index) => {
-                const blinkPattern = () => {
-                    if (this.gameState === 'waiting_for_announcement') {
-                        led.material.emissive.setScalar(Math.random() * 0.5);
-                        led.scale.setScalar(1 + Math.random() * 0.3);
-                        setTimeout(blinkPattern, 100 + Math.random() * 200);
-                    }
-                };
-                setTimeout(blinkPattern, index * 50);
-            });
-            
-            // Vibración del altavoz
-            const originalPosition = this.speakerNearDoll.position.clone();
-            const vibratePattern = () => {
-                if (this.gameState === 'waiting_for_announcement') {
-                    this.speakerNearDoll.position.x = originalPosition.x + (Math.random() - 0.5) * 0.1;
-                    this.speakerNearDoll.position.y = originalPosition.y + (Math.random() - 0.5) * 0.05;
-                    this.speakerNearDoll.position.z = originalPosition.z + (Math.random() - 0.5) * 0.05;
-                    setTimeout(vibratePattern, 50);
-                } else {
-                    this.speakerNearDoll.position.copy(originalPosition);
+            const children = this.speakerNearDoll.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child.geometry && child.geometry.type === 'SphereGeometry' && child.position.y > 1) {
+                    const blinkLED = () => {
+                        if (this.gameState === 'waiting_for_announcement') {
+                            child.material.emissive.setScalar(Math.random() * 0.8);
+                            setTimeout(blinkLED, 150);
+                        }
+                    };
+                    setTimeout(blinkLED, i * 50);
                 }
-            };
-            vibratePattern();
-        }
-    }
-    
-    createSpeakerSoundEffects() {
-        // Efectos visuales de ondas sonoras desde la corneta
-        if (this.speakerNearDoll) {
-            // Animar las ondas sonoras durante la reproducción
-            const waves = this.scene.children.filter(child => 
-                child.geometry && child.geometry.type === 'RingGeometry'
-            );
-            
-            waves.forEach((wave, index) => {
-                const animateWave = () => {
-                    if (this.gameState === 'waiting_for_announcement') {
-                        wave.scale.multiplyScalar(1.005);
-                        wave.material.opacity = Math.sin(Date.now() * 0.01 + index) * 0.1 + 0.05;
-                        requestAnimationFrame(animateWave);
-                    }
-                };
-                setTimeout(() => requestAnimationFrame(animateWave), index * 100);
-            });
-        }
-    }
-    
-    createSpeakerAnnouncementSound() {
-        // Fallback: sonido artificial si el video no funciona
-        if (!this.audioContext) return;
-        
-        console.log('Usando sonido artificial como fallback...');
-        
-        // Crear sonido de fondo de corneta/altavoz
-        const createStaticNoise = () => {
-            const bufferSize = this.audioContext.sampleRate * 0.5;
-            const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-            const output = buffer.getChannelData(0);
-            
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = (Math.random() * 2 - 1) * 0.1;
             }
             
-            return buffer;
-        };
-        
-        const staticSource = this.audioContext.createBufferSource();
-        staticSource.buffer = createStaticNoise();
-        staticSource.loop = true;
-        
-        const filter = this.audioContext.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.value = 1000;
-        filter.Q.value = 0.5;
-        
-        const gainNode = this.audioContext.createGain();
-        gainNode.gain.value = 0.3;
-        
-        staticSource.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        staticSource.start();
-        
-        setTimeout(() => {
-            staticSource.stop();
-        }, 38000);
-        
-        this.playSpeakerBeeps();
+            // Pequeña vibración del altavoz
+            const originalPos = this.speakerNearDoll.position.clone();
+            const vibrateLoop = () => {
+                if (this.gameState === 'waiting_for_announcement') {
+                    this.speakerNearDoll.position.x = originalPos.x + (Math.random() - 0.5) * 0.05;
+                    this.speakerNearDoll.position.y = originalPos.y + (Math.random() - 0.5) * 0.02;
+                    setTimeout(vibrateLoop, 80);
+                } else {
+                    this.speakerNearDoll.position.copy(originalPos);
+                }
+            };
+            vibrateLoop();
+        }
     }
     
-    playSpeakerBeeps() {
-        const beepTimes = [0, 2000, 8000, 15000, 22000, 30000];
-        
-        beepTimes.forEach(time => {
-            setTimeout(() => {
-                if (this.audioContext) {
-                    const oscillator = this.audioContext.createOscillator();
-                    const gainNode = this.audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(this.audioContext.destination);
-                    
-                    oscillator.frequency.value = 800;
-                    oscillator.type = 'square';
-                    
-                    const now = this.audioContext.currentTime;
-                    gainNode.gain.setValueAtTime(0, now);
-                    gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.3);
-                }
-            }, time);
-        });
+    cleanupCornetaVideo() {
+        if (this.cornetaVideo) {
+            this.cornetaVideo.pause();
+            this.cornetaVideo.remove();
+            this.cornetaVideo = null;
+        }
     }
     
     cleanupAnnouncementVideo() {
