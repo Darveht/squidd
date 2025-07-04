@@ -91,8 +91,8 @@ class SquidGameSimulator {
     setupScene() {
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.Fog(0x87CEEB, 50, 120);
-        // Eliminar el fondo blanco que cubría la pared pintada
-        this.scene.background = null;
+        // Crear un cielo azul realista como en el show
+        this.scene.background = new THREE.Color(0x87CEEB);
     }
 
     setupCamera() {
@@ -552,63 +552,152 @@ class SquidGameSimulator {
     createDoll() {
         const dollGroup = new THREE.Group();
 
-        // Doll body
-        const bodyGeometry = new THREE.CylinderGeometry(1.5, 2, 4);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0xFFA500 });
+        // Cuerpo - vestido amarillo como Young-hee
+        const bodyGeometry = new THREE.CylinderGeometry(1.8, 2.2, 4.5);
+        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD700 }); // Amarillo dorado
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        body.position.y = 2;
+        body.position.y = 2.5;
         body.castShadow = true;
         dollGroup.add(body);
 
-        // Doll head
-        const headGeometry = new THREE.SphereGeometry(1.2);
-        const headMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBAC });
+        // Detalles del vestido - rayas rojas
+        for (let i = 0; i < 3; i++) {
+            const stripeGeometry = new THREE.CylinderGeometry(1.9, 2.3, 0.3);
+            const stripeMaterial = new THREE.MeshLambertMaterial({ color: 0xFF4500 }); // Rojo naranja
+            const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+            stripe.position.y = 1.5 + (i * 1.2);
+            dollGroup.add(stripe);
+        }
+
+        // Cabeza - más redonda y realista
+        const headGeometry = new THREE.SphereGeometry(1.4);
+        const headMaterial = new THREE.MeshLambertMaterial({ color: 0xFFE4B5 }); // Color piel más realista
         const head = new THREE.Mesh(headGeometry, headMaterial);
-        head.position.y = 5;
+        head.position.y = 5.8;
         head.castShadow = true;
         dollGroup.add(head);
 
-        // Hair (pigtails)
-        const hairGeometry = new THREE.SphereGeometry(0.3);
-        const hairMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        // Cabello - corte bob típico de Young-hee
+        const hairGeometry = new THREE.SphereGeometry(1.3);
+        const hairMaterial = new THREE.MeshLambertMaterial({ color: 0x2F1B14 }); // Marrón oscuro
+        const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+        hair.position.y = 6.2;
+        hair.scale.set(1, 0.8, 1); // Más plano arriba
+        dollGroup.add(hair);
 
-        const leftPigtail = new THREE.Mesh(hairGeometry, hairMaterial);
-        leftPigtail.position.set(-1, 5.5, 0);
-        dollGroup.add(leftPigtail);
+        // Flequillo
+        const bangsGeometry = new THREE.BoxGeometry(2.2, 0.4, 1.2);
+        const bangs = new THREE.Mesh(bangsGeometry, hairMaterial);
+        bangs.position.set(0, 6.5, 0.8);
+        dollGroup.add(bangs);
 
-        const rightPigtail = new THREE.Mesh(hairGeometry, hairMaterial);
-        rightPigtail.position.set(1, 5.5, 0);
-        dollGroup.add(rightPigtail);
-
-        // Eyes
-        const eyeGeometry = new THREE.SphereGeometry(0.1);
+        // Ojos - más grandes y expresivos como en el show
+        const eyeGeometry = new THREE.SphereGeometry(0.2);
         const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
 
         const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        leftEye.position.set(-0.3, 5.2, 1);
+        leftEye.position.set(-0.4, 5.9, 1.2);
         dollGroup.add(leftEye);
 
         const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-        rightEye.position.set(0.3, 5.2, 1);
+        rightEye.position.set(0.4, 5.9, 1.2);
         dollGroup.add(rightEye);
 
-        // Arms
-        const armGeometry = new THREE.CylinderGeometry(0.3, 0.4, 2.5);
-        const armMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBAC });
+        // Pupilas blancas brillantes
+        const pupilGeometry = new THREE.SphereGeometry(0.05);
+        const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+
+        const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        leftPupil.position.set(-0.38, 5.92, 1.25);
+        dollGroup.add(leftPupil);
+
+        const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+        rightPupil.position.set(0.38, 5.92, 1.25);
+        dollGroup.add(rightPupil);
+
+        // Nariz pequeña
+        const noseGeometry = new THREE.SphereGeometry(0.08);
+        const noseMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD7A5 });
+        const nose = new THREE.Mesh(noseGeometry, noseMaterial);
+        nose.position.set(0, 5.7, 1.3);
+        dollGroup.add(nose);
+
+        // Boca - sonrisa característica
+        const mouthGeometry = new THREE.BoxGeometry(0.3, 0.05, 0.1);
+        const mouthMaterial = new THREE.MeshBasicMaterial({ color: 0x8B0000 }); // Rojo oscuro
+        const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+        mouth.position.set(0, 5.4, 1.25);
+        dollGroup.add(mouth);
+
+        // Mejillas rosadas
+        const cheekGeometry = new THREE.SphereGeometry(0.15);
+        const cheekMaterial = new THREE.MeshLambertMaterial({ color: 0xFFB6C1 });
+
+        const leftCheek = new THREE.Mesh(cheekGeometry, cheekMaterial);
+        leftCheek.position.set(-0.6, 5.5, 1.1);
+        dollGroup.add(leftCheek);
+
+        const rightCheek = new THREE.Mesh(cheekGeometry, cheekMaterial);
+        rightCheek.position.set(0.6, 5.5, 1.1);
+        dollGroup.add(rightCheek);
+
+        // Brazos - más proporcionados
+        const armGeometry = new THREE.CylinderGeometry(0.35, 0.4, 3);
+        const armMaterial = new THREE.MeshLambertMaterial({ color: 0xFFE4B5 });
 
         const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-        leftArm.position.set(-2, 3, 0);
-        leftArm.rotation.z = Math.PI / 6;
+        leftArm.position.set(-2.2, 3.5, 0);
+        leftArm.rotation.z = Math.PI / 8;
+        leftArm.castShadow = true;
         dollGroup.add(leftArm);
 
         const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-        rightArm.position.set(2, 3, 0);
-        rightArm.rotation.z = -Math.PI / 6;
+        rightArm.position.set(2.2, 3.5, 0);
+        rightArm.rotation.z = -Math.PI / 8;
+        rightArm.castShadow = true;
         dollGroup.add(rightArm);
 
-        dollGroup.position.set(0, 0, -38); // Centered, directly in front of the tree
-        dollGroup.scale.set(1.2, 1.2, 1.2);
-        dollGroup.rotation.y = Math.PI; // Face towards the starting line
+        // Manos
+        const handGeometry = new THREE.SphereGeometry(0.3);
+        const handMaterial = new THREE.MeshLambertMaterial({ color: 0xFFE4B5 });
+
+        const leftHand = new THREE.Mesh(handGeometry, handMaterial);
+        leftHand.position.set(-2.8, 2.2, 0);
+        dollGroup.add(leftHand);
+
+        const rightHand = new THREE.Mesh(handGeometry, handMaterial);
+        rightHand.position.set(2.8, 2.2, 0);
+        dollGroup.add(rightHand);
+
+        // Piernas - más realistas
+        const legGeometry = new THREE.CylinderGeometry(0.3, 0.35, 2);
+        const legMaterial = new THREE.MeshLambertMaterial({ color: 0xFFE4B5 });
+
+        const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        leftLeg.position.set(-0.8, 0.8, 0);
+        leftLeg.castShadow = true;
+        dollGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+        rightLeg.position.set(0.8, 0.8, 0);
+        rightLeg.castShadow = true;
+        dollGroup.add(rightLeg);
+
+        // Zapatos - negros como en el show
+        const shoeGeometry = new THREE.BoxGeometry(0.6, 0.3, 1);
+        const shoeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+
+        const leftShoe = new THREE.Mesh(shoeGeometry, shoeMaterial);
+        leftShoe.position.set(-0.8, 0, 0.2);
+        dollGroup.add(leftShoe);
+
+        const rightShoe = new THREE.Mesh(shoeGeometry, shoeMaterial);
+        rightShoe.position.set(0.8, 0, 0.2);
+        dollGroup.add(rightShoe);
+
+        dollGroup.position.set(0, 0, -38); // Centrado frente al árbol
+        dollGroup.scale.set(1.5, 1.5, 1.5); // Más grande para ser imponente
+        dollGroup.rotation.y = Math.PI; // Mirando hacia la línea de salida
         this.scene.add(dollGroup);
         this.doll = dollGroup;
     }
@@ -940,12 +1029,13 @@ class SquidGameSimulator {
         if (this.settings.showUI) {
             topUI.style.display = 'flex';
             levelIndicator.style.display = this.settings.showLevelIndicator ? 'block' : 'none';
-            timerContainer.style.display = this.settings.showTimer ? 'block' : 'block';
             playersCount.style.display = this.settings.showPlayersCount ? 'block' : 'none';
         } else {
             topUI.style.display = 'none';
-            timerContainer.style.display = 'none';
         }
+        
+        // El cronómetro se muestra independientemente si está activado
+        timerContainer.style.display = this.settings.showTimer ? 'block' : 'none';
     }
 
     generatePlayerProfiles() {
