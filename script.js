@@ -745,6 +745,12 @@ class SquidGameSimulator {
     createVirtualJoystick() {
         const joystickHTML = `
             <div id="virtual-joystick" class="virtual-joystick" style="display: flex;">
+                <div class="joystick-directions">
+                    <div class="direction-indicator up">↑</div>
+                    <div class="direction-indicator left">←</div>
+                    <div class="direction-indicator right">→</div>
+                    <div class="direction-indicator down">↓</div>
+                </div>
                 <div id="joystick-knob" class="joystick-knob"></div>
             </div>
             <div id="run-button" class="run-button" style="display: flex;">🏃‍♂️</div>
@@ -793,11 +799,11 @@ class SquidGameSimulator {
             const normalizedX = Math.max(-1, Math.min(1, deltaX / maxDistance));
             const normalizedY = Math.max(-1, Math.min(1, deltaY / maxDistance));
 
-            // Simular teclas presionadas
-            this.keys['KeyW'] = normalizedY < -0.3;
-            this.keys['KeyS'] = normalizedY > 0.3;
-            this.keys['KeyA'] = normalizedX < -0.3;
-            this.keys['KeyD'] = normalizedX > 0.3;
+            // Simular teclas presionadas con mayor sensibilidad
+            this.keys['KeyW'] = normalizedY < -0.15; // Más sensible
+            this.keys['KeyS'] = normalizedY > 0.15;  // Más sensible
+            this.keys['KeyA'] = normalizedX < -0.15; // Más sensible
+            this.keys['KeyD'] = normalizedX > 0.15;  // Más sensible
 
             e.preventDefault();
         }, { passive: false });
@@ -1169,26 +1175,47 @@ class SquidGameSimulator {
         let moved = false;
         const previousPosition = { ...this.playerPosition };
 
-        // Movement
-        if (this.keys['KeyW'] || this.keys['ArrowUp']) {
-            this.playerPosition.z -= speed * Math.cos(this.camera.rotation.y);
-            this.playerPosition.x -= speed * Math.sin(this.camera.rotation.y);
-            moved = true;
-        }
-        if (this.keys['KeyS'] || this.keys['ArrowDown']) {
-            this.playerPosition.z += speed * Math.cos(this.camera.rotation.y);
-            this.playerPosition.x += speed * Math.sin(this.camera.rotation.y);
-            moved = true;
-        }
-        if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
-            this.playerPosition.z -= speed * Math.sin(this.camera.rotation.y);
-            this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
-            moved = true;
-        }
-        if (this.keys['KeyD'] || this.keys['ArrowRight']) {
-            this.playerPosition.z += speed * Math.sin(this.camera.rotation.y);
-            this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
-            moved = true;
+        // Movement - different logic for mobile vs desktop
+        if (this.isTouchDevice) {
+            // Mobile: absolute movement directions
+            if (this.keys['KeyW'] || this.keys['ArrowUp']) {
+                this.playerPosition.z -= speed; // Move forward (towards doll)
+                moved = true;
+            }
+            if (this.keys['KeyS'] || this.keys['ArrowDown']) {
+                this.playerPosition.z += speed; // Move backward (away from doll)
+                moved = true;
+            }
+            if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
+                this.playerPosition.x -= speed; // Move left
+                moved = true;
+            }
+            if (this.keys['KeyD'] || this.keys['ArrowRight']) {
+                this.playerPosition.x += speed; // Move right
+                moved = true;
+            }
+        } else {
+            // Desktop: camera-relative movement
+            if (this.keys['KeyW'] || this.keys['ArrowUp']) {
+                this.playerPosition.z -= speed * Math.cos(this.camera.rotation.y);
+                this.playerPosition.x -= speed * Math.sin(this.camera.rotation.y);
+                moved = true;
+            }
+            if (this.keys['KeyS'] || this.keys['ArrowDown']) {
+                this.playerPosition.z += speed * Math.cos(this.camera.rotation.y);
+                this.playerPosition.x += speed * Math.sin(this.camera.rotation.y);
+                moved = true;
+            }
+            if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
+                this.playerPosition.z -= speed * Math.sin(this.camera.rotation.y);
+                this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
+                moved = true;
+            }
+            if (this.keys['KeyD'] || this.keys['ArrowRight']) {
+                this.playerPosition.z += speed * Math.sin(this.camera.rotation.y);
+                this.playerPosition.x += speed * Math.cos(this.camera.rotation.y);
+                moved = true;
+            }
         }
 
         // Boundary checking
