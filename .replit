@@ -13,4 +13,4 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python -m http.server 8000 --bind 0.0.0.0"
+args = "npx http-server . -p 8000 -a 0.0.0.0 --cors"

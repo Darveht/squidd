@@ -26,6 +26,20 @@ class SquidGameSimulator {
         this.countdownTime = 5;
         this.eliminatedPlayers = [];
         this.playerProfiles = this.generatePlayerProfiles();
+        
+        // Sistema de video cinematográfico
+        this.cinematicVideo = null;
+        this.cinematicActive = false;
+        this.subtitles = [
+            { text: "Bienvenidos, participantes.", start: 2, end: 5 },
+            { text: "Han sido seleccionados para formar parte de esta competencia.", start: 6, end: 10 },
+            { text: "A partir de este momento, sus acciones serán observadas con precisión.", start: 11, end: 16 },
+            { text: "Cualquier incumplimiento de las normas resultará en una eliminación inmediata.", start: 17, end: 22 },
+            { text: "Prepárense para iniciar el primer desafío.", start: 23, end: 27 },
+            { text: "Recuerden: solo los que sigan las reglas podrán continuar.", start: 28, end: 33 },
+            { text: "El juego comenzará en breve.", start: 34, end: 37 }
+        ];
+        this.currentSubtitleIndex = 0;
 
         // Configuraciones del usuario
         this.settings = {
@@ -67,7 +81,7 @@ class SquidGameSimulator {
             this.setupSettingsMenu();
             this.setupAudio();
             this.hideLoadingScreen();
-            this.startGame();
+            this.startCinematicIntro();
             this.animate();
         }, 3000);
     }
@@ -1134,6 +1148,158 @@ class SquidGameSimulator {
 
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + duration);
+    }
+
+    startCinematicIntro() {
+        this.gameState = 'cinematic';
+        this.cinematicActive = true;
+        
+        // Crear overlay cinematográfico
+        this.createCinematicOverlay();
+        
+        // Configurar y reproducir video
+        this.setupCinematicVideo();
+        
+        // Iniciar sistema de subtítulos
+        this.startSubtitleSystem();
+    }
+
+    createCinematicOverlay() {
+        const cinematicHTML = `
+            <div id="cinematic-intro" class="cinematic-intro">
+                <div id="cinematic-video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000;">
+                    <video id="cinematic-video" style="width: 100%; height: 100%; object-fit: cover; opacity: 0;">
+                        <source src="https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=b3hesihl&dl=1" type="video/mp4">
+                    </video>
+                </div>
+                
+                <div class="cinematic-overlay">
+                    <div class="cinematic-title">
+                        <h1>SQUID GAME</h1>
+                        <h2>FIRST GAME</h2>
+                    </div>
+                    
+                    <div id="subtitle-container" class="subtitle-container">
+                        <div id="subtitle-text" class="subtitle-text"></div>
+                    </div>
+                    
+                    <div class="cinematic-progress">
+                        <div id="progress-bar" class="progress-bar"></div>
+                    </div>
+                    
+                    <button id="skip-intro-btn" class="skip-intro-btn">SALTAR INTRODUCCIÓN</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', cinematicHTML);
+        
+        // Event listener para saltar
+        document.getElementById('skip-intro-btn').addEventListener('click', () => {
+            this.skipCinematic();
+        });
+    }
+
+    setupCinematicVideo() {
+        this.cinematicVideo = document.getElementById('cinematic-video');
+        
+        this.cinematicVideo.addEventListener('canplay', () => {
+            console.log('Video listo para reproducir');
+            this.cinematicVideo.style.opacity = '1';
+            this.cinematicVideo.play().catch(error => {
+                console.log('Error al reproducir video:', error);
+                // Si falla el video, continuar sin él
+                this.skipCinematic();
+            });
+        });
+        
+        this.cinematicVideo.addEventListener('ended', () => {
+            this.skipCinematic();
+        });
+        
+        this.cinematicVideo.addEventListener('error', (e) => {
+            console.log('Error en el video:', e);
+            // Si hay error, continuar sin video
+            this.skipCinematic();
+        });
+        
+        // Intentar cargar el video
+        this.cinematicVideo.load();
+    }
+
+    startSubtitleSystem() {
+        this.subtitleInterval = setInterval(() => {
+            if (!this.cinematicActive) {
+                clearInterval(this.subtitleInterval);
+                return;
+            }
+            
+            const currentTime = this.cinematicVideo ? this.cinematicVideo.currentTime : Date.now() / 1000;
+            this.updateSubtitles(currentTime);
+        }, 100);
+    }
+
+    updateSubtitles(currentTime) {
+        const subtitleContainer = document.getElementById('subtitle-container');
+        const subtitleText = document.getElementById('subtitle-text');
+        
+        if (!subtitleContainer || !subtitleText) return;
+        
+        const currentSubtitle = this.subtitles.find(sub => 
+            currentTime >= sub.start && currentTime <= sub.end
+        );
+        
+        if (currentSubtitle) {
+            if (subtitleText.textContent !== currentSubtitle.text) {
+                subtitleText.textContent = currentSubtitle.text;
+                subtitleContainer.classList.add('show-subtitle');
+                this.animateSubtitleText();
+            }
+        } else {
+            subtitleContainer.classList.remove('show-subtitle');
+        }
+    }
+
+    animateSubtitleText() {
+        const subtitleText = document.getElementById('subtitle-text');
+        if (!subtitleText) return;
+        
+        // Efecto de escritura tipo máquina
+        const text = subtitleText.textContent;
+        subtitleText.textContent = '';
+        
+        let i = 0;
+        const typeWriter = setInterval(() => {
+            if (i < text.length) {
+                subtitleText.textContent += text.charAt(i);
+                i++;
+            } else {
+                clearInterval(typeWriter);
+            }
+        }, 50);
+    }
+
+    skipCinematic() {
+        this.cinematicActive = false;
+        
+        if (this.subtitleInterval) {
+            clearInterval(this.subtitleInterval);
+        }
+        
+        if (this.cinematicVideo) {
+            this.cinematicVideo.pause();
+        }
+        
+        const cinematicIntro = document.getElementById('cinematic-intro');
+        if (cinematicIntro) {
+            cinematicIntro.style.opacity = '0';
+            setTimeout(() => {
+                cinematicIntro.remove();
+                this.startGame();
+            }, 1000);
+        } else {
+            this.startGame();
+        }
     }
 
     startGame() {
