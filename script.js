@@ -1377,84 +1377,92 @@ class SquidGameSimulator {
     }
 
     startAnnouncementAudio() {
-        // Crear elemento de audio para reproducir el video con eco
-        this.announcementAudio = document.createElement('audio');
-        this.announcementAudio.src = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&dl=1';
-        this.announcementAudio.volume = 1.0; // Volumen máximo
-        this.announcementAudio.preload = 'auto';
+        console.log('Iniciando anuncio de la corneta...');
         
-        // Configurar efectos de audio con Web Audio API
-        if (this.audioContext) {
-            try {
-                const source = this.audioContext.createMediaElementSource(this.announcementAudio);
-                
-                // Crear reverb/eco
-                const convolver = this.audioContext.createConvolver();
-                const impulseBuffer = this.createImpulseResponse(4, 4, false);
-                convolver.buffer = impulseBuffer;
-                
-                // Crear filtros para simular altavoz
-                const lowpassFilter = this.audioContext.createBiquadFilter();
-                lowpassFilter.type = 'lowpass';
-                lowpassFilter.frequency.value = 8000;
-                lowpassFilter.Q.value = 1;
-                
-                const highpassFilter = this.audioContext.createBiquadFilter();
-                highpassFilter.type = 'highpass';
-                highpassFilter.frequency.value = 200;
-                highpassFilter.Q.value = 1;
-                
-                // Ganancia para amplificar
-                const gainNode = this.audioContext.createGain();
-                gainNode.gain.value = 2.0; // Amplificar 2x
-                
-                // Conectar cadena de efectos
-                source.connect(highpassFilter);
-                highpassFilter.connect(lowpassFilter);
-                lowpassFilter.connect(convolver);
-                convolver.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                // También conexión directa para mezclar
-                const dryGain = this.audioContext.createGain();
-                dryGain.gain.value = 0.7;
-                source.connect(dryGain);
-                dryGain.connect(this.audioContext.destination);
-                
-            } catch (error) {
-                console.log('Error configurando efectos de audio:', error);
-                // Continuar sin efectos
-            }
-        }
+        // Crear sonido de corneta/altavoz con Web Audio API
+        this.createSpeakerAnnouncementSound();
         
-        // Eventos del audio
-        this.announcementAudio.addEventListener('canplay', () => {
-            console.log('Audio de anuncio listo para reproducir con eco');
-            this.announcementAudio.play().catch(error => {
-                console.log('Error al reproducir audio:', error);
-                setTimeout(() => {
-                    this.startActualGame();
-                }, 40000);
-            });
-        });
-        
-        this.announcementAudio.addEventListener('ended', () => {
-            console.log('Anuncio terminado, iniciando juego real');
-            this.startActualGame();
-        });
-        
-        this.announcementAudio.addEventListener('error', (e) => {
-            console.log('Error en el audio:', e);
-            setTimeout(() => {
-                this.startActualGame();
-            }, 40000);
-        });
-        
-        // Iniciar sistema de subtítulos mejorado
+        // Iniciar sistema de subtítulos inmediatamente
         this.startSubtitleSystem();
         
-        // Cargar el audio
-        this.announcementAudio.load();
+        // El anuncio durará 38 segundos (duración total de los subtítulos)
+        setTimeout(() => {
+            console.log('Anuncio terminado, iniciando juego real');
+            this.startActualGame();
+        }, 38000);
+    }
+    
+    createSpeakerAnnouncementSound() {
+        if (!this.audioContext) return;
+        
+        // Crear sonido de fondo de corneta/altavoz
+        const createStaticNoise = () => {
+            const bufferSize = this.audioContext.sampleRate * 0.5; // 0.5 segundos
+            const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = (Math.random() * 2 - 1) * 0.1; // Ruido suave
+            }
+            
+            return buffer;
+        };
+        
+        // Reproducir sonido de estática de fondo durante todo el anuncio
+        const staticSource = this.audioContext.createBufferSource();
+        staticSource.buffer = createStaticNoise();
+        staticSource.loop = true;
+        
+        // Filtro para simular altavoz
+        const filter = this.audioContext.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1000;
+        filter.Q.value = 0.5;
+        
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.value = 0.3;
+        
+        staticSource.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        staticSource.start();
+        
+        // Detener después de 38 segundos
+        setTimeout(() => {
+            staticSource.stop();
+        }, 38000);
+        
+        // Sonidos de corneta periódicos
+        this.playSpeakerBeeps();
+    }
+    
+    playSpeakerBeeps() {
+        const beepTimes = [0, 2000, 8000, 15000, 22000, 30000]; // Momentos para beeps
+        
+        beepTimes.forEach(time => {
+            setTimeout(() => {
+                if (this.audioContext) {
+                    // Beep de corneta
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.value = 800; // Frecuencia de corneta
+                    oscillator.type = 'square';
+                    
+                    const now = this.audioContext.currentTime;
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    
+                    oscillator.start(now);
+                    oscillator.stop(now + 0.3);
+                }
+            }, time);
+        });
     }
     
     createImpulseResponse(duration, decay, reverse) {
@@ -1504,6 +1512,8 @@ class SquidGameSimulator {
     }
 
     startSubtitleSystem() {
+        console.log('Iniciando sistema de subtítulos...');
+        
         // Limpiar cualquier subtítulo previo
         const existingContainer = document.getElementById('subtitle-container-game');
         if (existingContainer) {
@@ -1520,18 +1530,72 @@ class SquidGameSimulator {
         this.currentSubtitleIndex = 0;
         this.subtitleStartTime = Date.now();
         
-        this.subtitleInterval = setInterval(() => {
-            if (this.gameState !== 'waiting_for_announcement') {
-                this.cleanupSubtitles();
-                return;
-            }
+        // Mostrar subtítulos uno por uno con timing correcto
+        this.showSequentialSubtitles();
+    }
+    
+    showSequentialSubtitles() {
+        this.subtitles.forEach((subtitle, index) => {
+            setTimeout(() => {
+                if (this.gameState === 'waiting_for_announcement') {
+                    this.displaySubtitle(subtitle.text);
+                }
+            }, subtitle.start * 1000);
             
-            const currentTime = this.announcementAudio ? this.announcementAudio.currentTime : (Date.now() - this.subtitleStartTime) / 1000;
-            this.updateSubtitles(currentTime);
-        }, 200);
+            // Ocultar subtítulo al final de su tiempo
+            setTimeout(() => {
+                if (this.gameState === 'waiting_for_announcement') {
+                    this.hideSubtitle();
+                }
+            }, subtitle.end * 1000);
+        });
+    }
+    
+    displaySubtitle(text) {
+        const subtitleContainer = document.getElementById('subtitle-container-game');
+        const subtitleText = document.getElementById('subtitle-text-game');
+        
+        if (!subtitleContainer || !subtitleText) return;
+        
+        console.log('Mostrando subtítulo:', text);
+        
+        subtitleText.textContent = text;
+        subtitleContainer.classList.add('show-subtitle');
+        subtitleContainer.style.display = 'block';
+        
+        // Efecto de aparición
+        subtitleText.style.opacity = '0';
+        subtitleText.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            if (subtitleText) {
+                subtitleText.style.transition = 'all 0.5s ease';
+                subtitleText.style.opacity = '1';
+                subtitleText.style.transform = 'translateY(0)';
+            }
+        }, 100);
+    }
+    
+    hideSubtitle() {
+        const subtitleContainer = document.getElementById('subtitle-container-game');
+        const subtitleText = document.getElementById('subtitle-text-game');
+        
+        if (!subtitleContainer || !subtitleText) return;
+        
+        subtitleText.style.transition = 'all 0.3s ease';
+        subtitleText.style.opacity = '0';
+        subtitleText.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+            if (subtitleContainer) {
+                subtitleContainer.classList.remove('show-subtitle');
+            }
+        }, 300);
     }
     
     cleanupSubtitles() {
+        console.log('Limpiando subtítulos...');
+        
         if (this.subtitleInterval) {
             clearInterval(this.subtitleInterval);
             this.subtitleInterval = null;
@@ -1539,9 +1603,10 @@ class SquidGameSimulator {
         
         const container = document.getElementById('subtitle-container-game');
         if (container) {
+            container.style.transition = 'opacity 0.5s ease';
             container.style.opacity = '0';
             setTimeout(() => {
-                if (container.parentNode) {
+                if (container && container.parentNode) {
                     container.remove();
                 }
             }, 500);
@@ -1549,71 +1614,7 @@ class SquidGameSimulator {
         this.currentSubtitleIndex = 0;
     }
 
-    updateSubtitles(currentTime) {
-        const subtitleContainer = document.getElementById('subtitle-container-game');
-        const subtitleText = document.getElementById('subtitle-text-game');
-        
-        if (!subtitleContainer || !subtitleText) return;
-        
-        // Buscar subtítulo actual basado en tiempo
-        let currentSubtitle = null;
-        for (let i = 0; i < this.subtitles.length; i++) {
-            const sub = this.subtitles[i];
-            if (currentTime >= sub.start && currentTime <= sub.end) {
-                currentSubtitle = sub;
-                break;
-            }
-        }
-        
-        if (currentSubtitle) {
-            // Solo actualizar si es un subtítulo diferente
-            if (subtitleText.textContent !== currentSubtitle.text) {
-                subtitleText.textContent = currentSubtitle.text;
-                subtitleContainer.classList.add('show-subtitle');
-                this.animateSubtitleTextGame(currentSubtitle.text);
-            }
-        } else {
-            // Ocultar subtítulo suavemente
-            if (subtitleContainer.classList.contains('show-subtitle')) {
-                subtitleContainer.classList.remove('show-subtitle');
-                setTimeout(() => {
-                    if (subtitleText) {
-                        subtitleText.textContent = '';
-                    }
-                }, 500);
-            }
-        }
-        
-        // Verificar si hemos terminado todos los subtítulos
-        if (currentTime > 38) { // Después del último subtítulo
-            this.cleanupSubtitles();
-        }
-    }
-
-    animateSubtitleTextGame(text) {
-        const subtitleText = document.getElementById('subtitle-text-game');
-        if (!subtitleText || !text) return;
-        
-        // Limpiar cualquier animación previa
-        if (this.typeWriterInterval) {
-            clearInterval(this.typeWriterInterval);
-        }
-        
-        // Mostrar texto directamente sin efecto de escritura para evitar problemas
-        subtitleText.textContent = text;
-        
-        // Efecto de aparición suave
-        subtitleText.style.opacity = '0';
-        subtitleText.style.transform = 'translateY(10px)';
-        
-        setTimeout(() => {
-            if (subtitleText) {
-                subtitleText.style.transition = 'all 0.3s ease';
-                subtitleText.style.opacity = '1';
-                subtitleText.style.transform = 'translateY(0)';
-            }
-        }, 50);
-    }
+    // Método updateSubtitles removido - ahora se usa showSequentialSubtitles
 
     animateSubtitleText() {
         const subtitleText = document.getElementById('subtitle-text');
