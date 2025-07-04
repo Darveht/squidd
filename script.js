@@ -349,113 +349,181 @@ class SquidGameSimulator {
     }
 
     createSpeakerNearDoll() {
-        // Corneta profesional en la esquina de la pared
+        // Corneta profesional mejorada tipo estadio
         const speakerGroup = new THREE.Group();
 
-        // Soporte principal montado en la pared
-        const mountGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.3);
-        const mountMaterial = new THREE.MeshLambertMaterial({ color: 0x2C2C2C });
-        const mount = new THREE.Mesh(mountGeometry, mountMaterial);
-        mount.position.set(0, 0, 0);
-        mount.castShadow = true;
-        speakerGroup.add(mount);
+        // Base de montaje robusta
+        const mountBaseGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.4);
+        const mountBaseMaterial = new THREE.MeshLambertMaterial({ color: 0x1C1C1C });
+        const mountBase = new THREE.Mesh(mountBaseGeometry, mountBaseMaterial);
+        mountBase.position.set(0, 0, 0);
+        mountBase.rotation.x = Math.PI / 2;
+        mountBase.castShadow = true;
+        speakerGroup.add(mountBase);
 
-        // Brazo articulado
-        const armGeometry = new THREE.BoxGeometry(0.2, 0.2, 2);
-        const armMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
-        const arm = new THREE.Mesh(armGeometry, armMaterial);
-        arm.position.set(0, 0, 1);
-        arm.castShadow = true;
-        speakerGroup.add(arm);
+        // Brazo articulado principal (más robusto)
+        const mainArmGeometry = new THREE.BoxGeometry(0.4, 0.4, 3);
+        const mainArmMaterial = new THREE.MeshLambertMaterial({ color: 0x2F2F2F });
+        const mainArm = new THREE.Mesh(mainArmGeometry, mainArmMaterial);
+        mainArm.position.set(0, 0, 1.8);
+        mainArm.castShadow = true;
+        speakerGroup.add(mainArm);
 
-        // Caja principal del altavoz - más grande y robusta
-        const speakerBoxGeometry = new THREE.BoxGeometry(2.5, 3, 1.5);
-        const speakerBoxMaterial = new THREE.MeshLambertMaterial({ color: 0x1A1A1A });
+        // Articulación intermedia
+        const jointGeometry = new THREE.SphereGeometry(0.3);
+        const jointMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
+        const joint = new THREE.Mesh(jointGeometry, jointMaterial);
+        joint.position.set(0, 0, 3.5);
+        joint.castShadow = true;
+        speakerGroup.add(joint);
+
+        // Caja del altavoz principal (más imponente)
+        const speakerBoxGeometry = new THREE.BoxGeometry(3.5, 4, 2);
+        const speakerBoxMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x0A0A0A,
+            roughness: 0.8,
+            metalness: 0.2
+        });
         const speakerBox = new THREE.Mesh(speakerBoxGeometry, speakerBoxMaterial);
-        speakerBox.position.set(0, 0, 2.5);
+        speakerBox.position.set(0, 0, 4.5);
         speakerBox.castShadow = true;
         speakerGroup.add(speakerBox);
 
-        // Altavoz principal circular
-        const mainSpeakerGeometry = new THREE.CylinderGeometry(1, 1, 0.3);
-        const mainSpeakerMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-        const mainSpeaker = new THREE.Mesh(mainSpeakerGeometry, mainSpeakerMaterial);
-        mainSpeaker.position.set(0, 0.3, 3.2);
-        mainSpeaker.rotation.x = Math.PI / 2;
-        speakerGroup.add(mainSpeaker);
+        // Marco decorativo del altavoz
+        const frameGeometry = new THREE.BoxGeometry(3.8, 4.3, 0.3);
+        const frameMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
+        const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+        frame.position.set(0, 0, 5.6);
+        speakerGroup.add(frame);
 
-        // Rejilla del altavoz con patrón hexagonal
-        const grilleGeometry = new THREE.CircleGeometry(0.8, 6);
-        const grilleMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x000000,
-            transparent: true,
-            opacity: 0.8
-        });
-        const grille = new THREE.Mesh(grilleGeometry, grilleMaterial);
-        grille.position.set(0, 0.3, 3.25);
-        grille.rotation.x = Math.PI / 2;
-        speakerGroup.add(grille);
+        // Woofer principal (altavoz grande)
+        const wooferGeometry = new THREE.CylinderGeometry(1.3, 1.3, 0.4);
+        const wooferMaterial = new THREE.MeshLambertMaterial({ color: 0x1A1A1A });
+        const woofer = new THREE.Mesh(wooferGeometry, wooferMaterial);
+        woofer.position.set(0, 0.5, 5.8);
+        woofer.rotation.x = Math.PI / 2;
+        speakerGroup.add(woofer);
 
-        // Tweeter (altavoz de agudos)
-        const tweeterGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.2);
-        const tweeterMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
-        const tweeter = new THREE.Mesh(tweeterGeometry, tweeterMaterial);
-        tweeter.position.set(0, -0.8, 3.2);
-        tweeter.rotation.x = Math.PI / 2;
-        speakerGroup.add(tweeter);
+        // Cono del woofer
+        const coneGeometry = new THREE.ConeGeometry(1, 0.3, 32);
+        const coneMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+        cone.position.set(0, 0.5, 5.9);
+        cone.rotation.x = Math.PI / 2;
+        speakerGroup.add(cone);
 
-        // Puerto de graves (bass port)
-        const bassPortGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.8);
-        const bassPortMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
-        const bassPort = new THREE.Mesh(bassPortGeometry, bassPortMaterial);
-        bassPort.position.set(0, -1.2, 3.2);
-        bassPort.rotation.x = Math.PI / 2;
-        speakerGroup.add(bassPort);
-
-        // Luces LED indicadoras
-        for (let i = 0; i < 3; i++) {
-            const ledGeometry = new THREE.SphereGeometry(0.05);
-            const ledMaterial = new THREE.MeshBasicMaterial({ 
-                color: i === 0 ? 0x00FF00 : (i === 1 ? 0xFFFF00 : 0xFF0000),
-                emissive: i === 0 ? 0x002200 : (i === 1 ? 0x222200 : 0x220000)
+        // Rejilla protectora con patrón hexagonal
+        for (let i = 0; i < 6; i++) {
+            const hexGeometry = new THREE.RingGeometry(0.3 + i * 0.15, 0.32 + i * 0.15, 6);
+            const hexMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x666666,
+                transparent: true,
+                opacity: 0.7
             });
-            const led = new THREE.Mesh(ledGeometry, ledMaterial);
-            led.position.set((i - 1) * 0.3, 1.3, 3.2);
-            speakerGroup.add(led);
+            const hexRing = new THREE.Mesh(hexGeometry, hexMaterial);
+            hexRing.position.set(0, 0.5, 5.95);
+            hexRing.rotation.x = Math.PI / 2;
+            speakerGroup.add(hexRing);
         }
 
-        // Logo o marca del altavoz
-        const logoGeometry = new THREE.PlaneGeometry(0.8, 0.2);
+        // Tweeter array (altavoces de agudos)
+        for (let i = 0; i < 4; i++) {
+            const tweeterGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.2);
+            const tweeterMaterial = new THREE.MeshLambertMaterial({ color: 0x4A4A4A });
+            const tweeter = new THREE.Mesh(tweeterGeometry, tweeterMaterial);
+            
+            const angle = (i / 4) * Math.PI * 2;
+            tweeter.position.set(
+                Math.cos(angle) * 0.8, 
+                -1 + Math.sin(angle) * 0.3, 
+                5.8
+            );
+            tweeter.rotation.x = Math.PI / 2;
+            speakerGroup.add(tweeter);
+        }
+
+        // Puertos de graves (bass reflex)
+        const bassPort1Geometry = new THREE.CylinderGeometry(0.2, 0.2, 1);
+        const bassPortMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        const bassPort1 = new THREE.Mesh(bassPort1Geometry, bassPortMaterial);
+        bassPort1.position.set(-1, -1.2, 5.8);
+        bassPort1.rotation.x = Math.PI / 2;
+        speakerGroup.add(bassPort1);
+
+        const bassPort2 = bassPort1.clone();
+        bassPort2.position.set(1, -1.2, 5.8);
+        speakerGroup.add(bassPort2);
+
+        // Panel de control con LEDs
+        const controlPanelGeometry = new THREE.BoxGeometry(2, 0.8, 0.2);
+        const controlPanelMaterial = new THREE.MeshLambertMaterial({ color: 0x2C2C2C });
+        const controlPanel = new THREE.Mesh(controlPanelGeometry, controlPanelMaterial);
+        controlPanel.position.set(0, -1.6, 5.7);
+        speakerGroup.add(controlPanel);
+
+        // LEDs de estado mejorados
+        const ledPositions = [
+            { x: -0.6, y: -1.6, color: 0x00FF00, emissive: 0x004400 }, // Verde - Power
+            { x: -0.2, y: -1.6, color: 0xFFFF00, emissive: 0x444400 }, // Amarillo - Signal
+            { x: 0.2, y: -1.6, color: 0xFF4400, emissive: 0x442200 },  // Naranja - Peak
+            { x: 0.6, y: -1.6, color: 0xFF0000, emissive: 0x440000 }   // Rojo - Clip
+        ];
+
+        ledPositions.forEach(ledInfo => {
+            const ledGeometry = new THREE.SphereGeometry(0.08);
+            const ledMaterial = new THREE.MeshBasicMaterial({ 
+                color: ledInfo.color,
+                emissive: ledInfo.emissive,
+                emissiveIntensity: 0.6
+            });
+            const led = new THREE.Mesh(ledGeometry, ledMaterial);
+            led.position.set(ledInfo.x, ledInfo.y, 5.8);
+            speakerGroup.add(led);
+        });
+
+        // Logo/Marca del fabricante
+        const logoGeometry = new THREE.PlaneGeometry(1.5, 0.3);
         const logoMaterial = new THREE.MeshBasicMaterial({ 
             color: 0xFFFFFF,
             transparent: true,
-            opacity: 0.7
+            opacity: 0.9
         });
         const logo = new THREE.Mesh(logoGeometry, logoMaterial);
-        logo.position.set(0, 1, 3.25);
+        logo.position.set(0, 1.8, 5.75);
         speakerGroup.add(logo);
 
-        // Cables de conexión
-        const cableGeometry = new THREE.CylinderGeometry(0.03, 0.03, 2);
+        // Sistema de cables mejorado
+        const mainCableGeometry = new THREE.CylinderGeometry(0.05, 0.05, 3);
         const cableMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
-        const cable1 = new THREE.Mesh(cableGeometry, cableMaterial);
-        cable1.position.set(0.5, -1, 1);
-        cable1.rotation.z = Math.PI / 6;
-        speakerGroup.add(cable1);
+        
+        const powerCable = new THREE.Mesh(mainCableGeometry, cableMaterial);
+        powerCable.position.set(0.8, -1.5, 2.5);
+        powerCable.rotation.z = Math.PI / 8;
+        speakerGroup.add(powerCable);
 
-        const cable2 = new THREE.Mesh(cableGeometry, cableMaterial);
-        cable2.position.set(-0.5, -1, 1);
-        cable2.rotation.z = -Math.PI / 6;
-        speakerGroup.add(cable2);
+        const audioCable = new THREE.Mesh(mainCableGeometry, cableMaterial);
+        audioCable.position.set(-0.8, -1.5, 2.5);
+        audioCable.rotation.z = -Math.PI / 8;
+        speakerGroup.add(audioCable);
 
-        // Posicionar en la esquina superior de la pared trasera
-        speakerGroup.position.set(-22, 9, -49.5); // Esquina izquierda alta
-        speakerGroup.rotation.y = Math.PI / 4; // Orientado hacia el campo
-        speakerGroup.rotation.x = -Math.PI / 12; // Ligeramente inclinado hacia abajo
+        // Conectores XLR
+        const xlrGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3);
+        const xlrMaterial = new THREE.MeshLambertMaterial({ color: 0x4A4A4A });
+        const xlrConnector = new THREE.Mesh(xlrGeometry, xlrMaterial);
+        xlrConnector.position.set(0, -1.6, 3.5);
+        xlrConnector.rotation.x = Math.PI / 2;
+        speakerGroup.add(xlrConnector);
+
+        // Posicionar y orientar la corneta
+        speakerGroup.position.set(-22, 10, -49.5);
+        speakerGroup.rotation.y = Math.PI / 4;
+        speakerGroup.rotation.x = -Math.PI / 16;
+        speakerGroup.scale.set(0.8, 0.8, 0.8); // Escalar ligeramente para mejor proporción
+        
         this.scene.add(speakerGroup);
         this.speakerNearDoll = speakerGroup;
 
-        // Efecto de sonido visual
+        // Efecto de sonido visual mejorado
         this.createSoundWaves();
     }
 
@@ -744,49 +812,98 @@ class SquidGameSimulator {
     createPlayer() {
         const playerGroup = new THREE.Group();
 
-        // Body
-        const bodyGeometry = new THREE.BoxGeometry(0.6, 1.2, 0.3);
+        // Estilo Roblox - Todo cuadrado/rectangular
+        
+        // Body (torso cuadrado más grande)
+        const bodyGeometry = new THREE.BoxGeometry(0.8, 1.4, 0.5);
         const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4169E1 });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 1.2;
         body.castShadow = true;
         playerGroup.add(body);
 
-        // Head
-        const headGeometry = new THREE.SphereGeometry(0.3);
+        // Head (cabeza completamente cuadrada)
+        const headGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
         const headMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBAC });
         const head = new THREE.Mesh(headGeometry, headMaterial);
-        head.position.y = 2;
+        head.position.y = 2.2;
         head.castShadow = true;
         playerGroup.add(head);
 
-        // Arms
-        const armGeometry = new THREE.BoxGeometry(0.2, 0.8, 0.2);
+        // Eyes (ojos cuadrados como Roblox)
+        const eyeGeometry = new THREE.BoxGeometry(0.08, 0.08, 0.02);
+        const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+        const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        leftEye.position.set(-0.15, 2.3, 0.32);
+        playerGroup.add(leftEye);
+
+        const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+        rightEye.position.set(0.15, 2.3, 0.32);
+        playerGroup.add(rightEye);
+
+        // Mouth (boca rectangular pequeña)
+        const mouthGeometry = new THREE.BoxGeometry(0.2, 0.04, 0.02);
+        const mouthMaterial = new THREE.MeshBasicMaterial({ color: 0x8B0000 });
+        const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+        mouth.position.set(0, 2.1, 0.32);
+        playerGroup.add(mouth);
+
+        // Arms (brazos completamente cuadrados)
+        const armGeometry = new THREE.BoxGeometry(0.3, 1.0, 0.3);
         const armMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBAC });
 
         const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-        leftArm.position.set(-0.5, 1.2, 0);
+        leftArm.position.set(-0.65, 1.2, 0);
         leftArm.castShadow = true;
         playerGroup.add(leftArm);
 
         const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-        rightArm.position.set(0.5, 1.2, 0);
+        rightArm.position.set(0.65, 1.2, 0);
         rightArm.castShadow = true;
         playerGroup.add(rightArm);
 
-        // Legs
-        const legGeometry = new THREE.BoxGeometry(0.2, 0.8, 0.2);
+        // Hands (manos cuadradas)
+        const handGeometry = new THREE.BoxGeometry(0.25, 0.25, 0.25);
+        const handMaterial = new THREE.MeshLambertMaterial({ color: 0xFFDBAC });
+
+        const leftHand = new THREE.Mesh(handGeometry, handMaterial);
+        leftHand.position.set(-0.65, 0.6, 0);
+        leftHand.castShadow = true;
+        playerGroup.add(leftHand);
+
+        const rightHand = new THREE.Mesh(handGeometry, handMaterial);
+        rightHand.position.set(0.65, 0.6, 0);
+        rightHand.castShadow = true;
+        playerGroup.add(rightHand);
+
+        // Legs (piernas completamente cuadradas)
+        const legGeometry = new THREE.BoxGeometry(0.3, 1.0, 0.3);
         const legMaterial = new THREE.MeshLambertMaterial({ color: 0x000080 });
 
         const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-        leftLeg.position.set(-0.2, 0.4, 0);
+        leftLeg.position.set(-0.25, 0.4, 0);
         leftLeg.castShadow = true;
         playerGroup.add(leftLeg);
 
         const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-        rightLeg.position.set(0.2, 0.4, 0);
+        rightLeg.position.set(0.25, 0.4, 0);
         rightLeg.castShadow = true;
         playerGroup.add(rightLeg);
+
+        // Feet (zapatos cuadrados)
+        const footGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.6);
+        const footMaterial = new THREE.MeshLambertMaterial({ color: 0x2F2F2F });
+
+        const leftFoot = new THREE.Mesh(footGeometry, footMaterial);
+        leftFoot.position.set(-0.25, -0.1, 0.1);
+        leftFoot.castShadow = true;
+        playerGroup.add(leftFoot);
+
+        const rightFoot = new THREE.Mesh(footGeometry, footMaterial);
+        rightFoot.position.set(0.25, -0.1, 0.1);
+        rightFoot.castShadow = true;
+        playerGroup.add(rightFoot);
 
         playerGroup.position.set(0, 0, 40);
         this.scene.add(playerGroup);
@@ -976,6 +1093,9 @@ class SquidGameSimulator {
 
         // Add corneta/speaker next to the doll
         this.createSpeakerNearDoll();
+
+        // Create shooting holes in walls
+        this.createShootingHoles();
     }
 
     setupControls() {
@@ -2033,7 +2153,7 @@ class SquidGameSimulator {
 
         // Check for movement during red light (solo durante el juego activo)
         if (this.gameState === 'playing' && moved && this.lightState === 'red' && this.dollLookingBack) {
-            this.endGame('caught');
+            this.triggerEliminationSequence();
             return;
         }
 
@@ -2242,6 +2362,236 @@ class SquidGameSimulator {
             this.camera.rotation.y += (this.targetRotationY - this.camera.rotation.y) * this.cameraSmoothing;
             this.camera.rotation.x += (this.targetRotationX - this.camera.rotation.x) * this.cameraSmoothing;
         }
+    }
+
+    triggerEliminationSequence() {
+        this.gameState = 'eliminating';
+        
+        // Activar los agujeros de disparo
+        this.activateShootingHoles();
+        
+        // Después de 1 segundo, disparar
+        setTimeout(() => {
+            this.executeShootingSequence();
+        }, 1000);
+    }
+
+    activateShootingHoles() {
+        console.log('🎯 Activando sistema de eliminación...');
+        
+        this.shootingHoles.forEach((hole, index) => {
+            // Cambiar LED a rojo para indicar activación
+            hole.led.material.color.setHex(0xFF0000);
+            hole.led.material.emissive.setHex(0x440000);
+            hole.led.material.emissiveIntensity = 0.8;
+            
+            // Sonido de carga del arma
+            setTimeout(() => {
+                if (this.audioContext) {
+                    this.playSound(800 + index * 100, 0.3, 'sawtooth');
+                }
+                
+                // Extender ligeramente el cañón
+                hole.barrel.scale.z = 1.5;
+                hole.active = true;
+            }, index * 200);
+        });
+    }
+
+    executeShootingSequence() {
+        console.log('🔫 Ejecutando secuencia de disparo...');
+        
+        // Seleccionar 2-3 agujeros aleatorios para disparar
+        const activeHoles = [...this.shootingHoles].sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        activeHoles.forEach((hole, index) => {
+            setTimeout(() => {
+                this.createBulletTrail(hole);
+            }, index * 150);
+        });
+        
+        // Después de los disparos, matar al jugador
+        setTimeout(() => {
+            this.killPlayer();
+        }, 800);
+    }
+
+    createBulletTrail(hole) {
+        // Crear rastro visual del disparo
+        const bulletTrailGeometry = new THREE.CylinderGeometry(0.02, 0.02, 1);
+        const bulletTrailMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFFFF00,
+            emissive: 0x444400,
+            emissiveIntensity: 0.8
+        });
+        const bulletTrail = new THREE.Mesh(bulletTrailGeometry, bulletTrailMaterial);
+        
+        // Calcular dirección del disparo hacia el jugador
+        const holePos = hole.group.position;
+        const playerPos = this.player.position;
+        
+        const direction = new THREE.Vector3(
+            playerPos.x - holePos.x,
+            playerPos.y + 1 - holePos.y,
+            playerPos.z - holePos.z
+        ).normalize();
+        
+        // Posicionar el rastro
+        bulletTrail.position.copy(holePos);
+        bulletTrail.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
+        
+        this.scene.add(bulletTrail);
+        
+        // Flash del disparo
+        const flashGeometry = new THREE.SphereGeometry(0.3);
+        const flashMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFFFFFF,
+            emissive: 0xFFFFFF,
+            emissiveIntensity: 2
+        });
+        const flash = new THREE.Mesh(flashGeometry, flashMaterial);
+        flash.position.copy(holePos);
+        this.scene.add(flash);
+        
+        // Sonido del disparo
+        if (this.audioContext) {
+            this.playSound(1200, 0.2, 'square');
+            setTimeout(() => this.playSound(300, 0.3, 'sawtooth'), 100);
+        }
+        
+        // Animar el rastro del proyectil
+        const startPos = holePos.clone();
+        const endPos = new THREE.Vector3(playerPos.x, playerPos.y + 1, playerPos.z);
+        const animationDuration = 200; // milisegundos
+        const startTime = performance.now();
+        
+        const animateBullet = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / animationDuration, 1);
+            
+            // Interpolación lineal
+            bulletTrail.position.lerpVectors(startPos, endPos, progress);
+            bulletTrail.scale.z = 1 + progress * 5; // Alargar el rastro
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateBullet);
+            } else {
+                // Limpiar efectos
+                this.scene.remove(bulletTrail);
+                
+                // Crear impacto en el jugador
+                this.createBloodEffect(playerPos);
+            }
+        };
+        
+        requestAnimationFrame(animateBullet);
+        
+        // Limpiar flash
+        setTimeout(() => {
+            this.scene.remove(flash);
+        }, 100);
+        
+        // Reset LED
+        setTimeout(() => {
+            hole.led.material.color.setHex(0x00FF00);
+            hole.led.material.emissive.setHex(0x002200);
+            hole.led.material.emissiveIntensity = 0.5;
+            hole.barrel.scale.z = 1;
+            hole.active = false;
+        }, 2000);
+    }
+
+    createBloodEffect(position) {
+        // Crear efecto de sangre
+        for (let i = 0; i < 15; i++) {
+            const bloodDropGeometry = new THREE.SphereGeometry(0.05 + Math.random() * 0.03);
+            const bloodDropMaterial = new THREE.MeshBasicMaterial({ color: 0x8B0000 });
+            const bloodDrop = new THREE.Mesh(bloodDropGeometry, bloodDropMaterial);
+            
+            bloodDrop.position.set(
+                position.x + (Math.random() - 0.5) * 0.5,
+                position.y + Math.random() * 0.5,
+                position.z + (Math.random() - 0.5) * 0.5
+            );
+            
+            this.scene.add(bloodDrop);
+            
+            // Animar caída de sangre
+            const fallSpeed = 0.02 + Math.random() * 0.03;
+            const animateBloodDrop = () => {
+                bloodDrop.position.y -= fallSpeed;
+                if (bloodDrop.position.y > 0) {
+                    requestAnimationFrame(animateBloodDrop);
+                } else {
+                    // Crear mancha en el suelo
+                    this.createBloodStain(bloodDrop.position.x, bloodDrop.position.z);
+                    this.scene.remove(bloodDrop);
+                }
+            };
+            
+            setTimeout(() => {
+                requestAnimationFrame(animateBloodDrop);
+            }, i * 50);
+        }
+    }
+
+    createBloodStain(x, z) {
+        const stainGeometry = new THREE.CircleGeometry(0.1 + Math.random() * 0.05);
+        const stainMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x660000,
+            transparent: true,
+            opacity: 0.8
+        });
+        const stain = new THREE.Mesh(stainGeometry, stainMaterial);
+        stain.position.set(x, 0.01, z);
+        stain.rotation.x = -Math.PI / 2;
+        this.scene.add(stain);
+    }
+
+    killPlayer() {
+        console.log('💀 Eliminando jugador...');
+        
+        // Crear animación de muerte - caída al suelo
+        const originalY = this.player.position.y;
+        const fallDuration = 1500;
+        const startTime = performance.now();
+        
+        const animateDeath = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / fallDuration, 1);
+            
+            // Caída con rotación
+            this.player.position.y = originalY * (1 - progress);
+            this.player.rotation.x = progress * Math.PI / 2; // Rotar hacia adelante
+            this.player.rotation.z = (Math.random() - 0.5) * progress * 0.5; // Ligera rotación lateral
+            
+            // Hacer que las partes del cuerpo se separen ligeramente
+            if (progress > 0.5) {
+                this.player.children.forEach((part, index) => {
+                    if (index > 0) { // No mover el torso principal
+                        part.position.x += (Math.random() - 0.5) * 0.02;
+                        part.position.z += (Math.random() - 0.5) * 0.02;
+                    }
+                });
+            }
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateDeath);
+            } else {
+                // Terminar el juego después de la animación
+                setTimeout(() => {
+                    this.endGame('caught');
+                }, 1000);
+            }
+        };
+        
+        // Sonido de muerte
+        if (this.audioContext) {
+            setTimeout(() => this.playSound(220, 1, 'sawtooth'), 300);
+            setTimeout(() => this.playSound(110, 1.5, 'triangle'), 600);
+        }
+        
+        requestAnimationFrame(animateDeath);
     }
 
     handleResize() {
