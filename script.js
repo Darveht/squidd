@@ -28,6 +28,18 @@ class SquidGameSimulator {
         this.eliminatedPlayers = [];
         this.playerProfiles = this.generatePlayerProfiles();
         
+        // Configuraciones del usuario
+        this.settings = {
+            announcements: true,
+            visualAnnouncements: true,
+            eliminationEffects: true
+        };
+        
+        // Variables para la secuencia cinematográfica
+        this.cinematicCamera = null;
+        this.cinematicActive = false;
+        this.cinematicProgress = 0;
+        
         // Load voices when available
         if (this.speechSynth) {
             if (this.speechSynth.getVoices().length === 0) {
@@ -52,9 +64,10 @@ class SquidGameSimulator {
             this.createDoll();
             this.createGuards();
             this.setupControls();
+            this.setupSettingsMenu();
             this.setupAudio();
             this.hideLoadingScreen();
-            this.startGame();
+            this.startCinematicIntro();
             this.animate();
         }, 3000);
     }
@@ -565,6 +578,31 @@ class SquidGameSimulator {
         });
     }
 
+    setupSettingsMenu() {
+        // Botón de configuración
+        document.getElementById('settings-button').addEventListener('click', () => {
+            document.getElementById('settings-menu').classList.remove('hidden');
+        });
+
+        // Cerrar configuración
+        document.getElementById('close-settings').addEventListener('click', () => {
+            document.getElementById('settings-menu').classList.add('hidden');
+        });
+
+        // Controles de configuración
+        document.getElementById('toggle-announcements').addEventListener('change', (e) => {
+            this.settings.announcements = e.target.checked;
+        });
+
+        document.getElementById('toggle-visual-announcements').addEventListener('change', (e) => {
+            this.settings.visualAnnouncements = e.target.checked;
+        });
+
+        document.getElementById('toggle-elimination-effects').addEventListener('change', (e) => {
+            this.settings.eliminationEffects = e.target.checked;
+        });
+    }
+
     generatePlayerProfiles() {
         const profiles = [];
         for (let i = 1; i <= 456; i++) {
@@ -618,9 +656,156 @@ class SquidGameSimulator {
         // Voice synthesis disabled - only visual announcements
     }
 
+    startCinematicIntro() {
+        this.gameState = 'cinematic';
+        this.cinematicActive = true;
+        
+        // Mostrar pantalla cinematográfica
+        document.getElementById('cinematic-intro').classList.remove('hidden');
+        
+        // Crear overlay para la escena 3D
+        const cinematicOverlay = document.createElement('div');
+        cinematicOverlay.className = 'cinematic-scene';
+        document.getElementById('cinematic-intro').appendChild(cinematicOverlay);
+        
+        // Configurar cámara cinematográfica (vista de dron)
+        this.setupCinematicCamera();
+        
+        // Iniciar animación de 20 segundos
+        this.startCinematicAnimation();
+        
+        // Reproducir sonido cinematográfico
+        this.playCinematicSound();
+        
+        // Terminar después de 20 segundos
+        setTimeout(() => {
+            this.endCinematicIntro();
+        }, 20000);
+    }
+
+    setupCinematicCamera() {
+        // Guardar cámara original
+        this.originalCamera = this.camera.clone();
+        
+        // Configurar cámara cinematográfica (vista desde arriba, como dron)
+        this.cinematicCamera = this.camera;
+        this.cinematicCamera.position.set(0, 80, 20); // Vista aérea
+        this.cinematicCamera.lookAt(0, 0, -20); // Mirando hacia la muñeca
+    }
+
+    startCinematicAnimation() {
+        const startTime = performance.now();
+        const duration = 20000; // 20 segundos
+        
+        const animateCinematic = (currentTime) => {
+            if (!this.cinematicActive) return;
+            
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Animación de la cámara (movimiento de dron)
+            if (progress < 0.3) {
+                // Primeros 6 segundos: descender hacia la muñeca
+                const t = progress / 0.3;
+                this.cinematicCamera.position.y = 80 - (t * 60); // De 80 a 20
+                this.cinematicCamera.position.z = 20 - (t * 35); // De 20 a -15
+                this.cinematicCamera.lookAt(-15, 4, -35); // Mirando a la muñeca
+            } else if (progress < 0.7) {
+                // Segundos 6-14: círculo alrededor de la muñeca
+                const t = (progress - 0.3) / 0.4;
+                const angle = t * Math.PI * 2;
+                const radius = 25;
+                this.cinematicCamera.position.x = Math.sin(angle) * radius;
+                this.cinematicCamera.position.z = -35 + Math.cos(angle) * radius;
+                this.cinematicCamera.position.y = 20 + Math.sin(t * Math.PI) * 10;
+                this.cinematicCamera.lookAt(-15, 4, -35);
+            } else {
+                // Últimos 6 segundos: alejarse para mostrar toda la plataforma
+                const t = (progress - 0.7) / 0.3;
+                this.cinematicCamera.position.set(
+                    0,
+                    30 + (t * 50), // Subir
+                    0 + (t * 60)   // Alejarse
+                );
+                this.cinematicCamera.lookAt(0, 0, 0); // Vista general
+            }
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateCinematic);
+            }
+        };
+        
+        requestAnimationFrame(animateCinematic);
+    }
+
+    playCinematicSound() {
+        // Sonido cinematográfico épico
+        if (!this.audioContext) return;
+        
+        const playEpicNote = (frequency, startTime, duration, volume = 0.3) => {
+            const oscillator = this.audioContext.createOscillator();
+            const gainNode = this.audioContext.createGain();
+            const filterNode = this.audioContext.createBiquadFilter();
+
+            oscillator.connect(filterNode);
+            filterNode.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sawtooth';
+            
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = frequency * 2;
+            
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(volume, startTime + 0.1);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + duration);
+        };
+
+        // Secuencia épica
+        const now = this.audioContext.currentTime;
+        const notes = [
+            { freq: 220, time: 0, duration: 2 },    // A3
+            { freq: 330, time: 2, duration: 2 },    // E4
+            { freq: 440, time: 4, duration: 3 },    // A4
+            { freq: 523, time: 7, duration: 2 },    // C5
+            { freq: 659, time: 9, duration: 4 },    // E5
+        ];
+
+        notes.forEach(note => {
+            playEpicNote(note.freq, now + note.time, note.duration);
+        });
+    }
+
+    endCinematicIntro() {
+        this.cinematicActive = false;
+        
+        // Ocultar pantalla cinematográfica
+        const cinematicIntro = document.getElementById('cinematic-intro');
+        cinematicIntro.style.opacity = '0';
+        
+        setTimeout(() => {
+            cinematicIntro.classList.add('hidden');
+            cinematicIntro.style.opacity = '1';
+        }, 1000);
+        
+        // Restaurar cámara a posición de juego
+        this.camera.position.set(0, 1.8, 47);
+        this.camera.rotation.set(0, 0, 0);
+        
+        // Iniciar el juego
+        this.startGame();
+    }
+
     makeAnnouncement(text, showVisual = true) {
+        // Verificar configuraciones antes de mostrar anuncios
+        if (!this.settings.announcements) return;
+        
         // Show visual announcement only
-        if (showVisual) {
+        if (showVisual && this.settings.visualAnnouncements) {
             this.showAnnouncementText(text);
         }
         // Removed excessive sound effects
@@ -923,6 +1108,9 @@ class SquidGameSimulator {
     }
 
     createEliminationEffect() {
+        // Solo mostrar efectos si está habilitado en configuración
+        if (!this.settings.eliminationEffects) return;
+        
         // Create diamond shatter effect
         const effectContainer = document.createElement('div');
         effectContainer.className = 'elimination-effect';
