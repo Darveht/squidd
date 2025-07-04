@@ -1,0 +1,57 @@
+mira tambien haz estos arreglos El árbol debe estar al fondo del campo, centrado exactamente en el eje medio del rectángulo del campo.
+
+🏗️ Alineado justo al centro entre las paredes laterales.
+
+🌳 Tipo de árbol: tronco grueso, ramas secas, sin hojas, estilo árbol muerto o invernal.
+
+🔄 El árbol debe estar ligeramente delante del fondo pintado, para que no quede plano.
+
+🟨 3. Posición de la muñeca
+🚫 Corrige la posición actual: la muñeca NO debe estar sola ni suelta en el fondo.
+
+✅ La muñeca debe estar justo delante del árbol, pegada al tronco o colocada sobre una base giratoria circular oculta.
+
+🧍‍♀️ El modelo de la muñeca debe mirar directamente hacia el área de inicio de los jugadores (hacia la línea de salida).
+
+🎯 Su visión debe abarcar en línea recta hacia el frente, y estar alineada con el campo.
+
+🟪 4. Paredes del entorno
+📦 Las paredes que rodean el campo deben ser muros altos y lisos de color beige claro o blanco hueso.
+
+⛓️ No deben tener textura de cemento ni ladrillos.
+
+🖼️ En las paredes no va ningún objeto real, pero sí deben tener un fondo pintado falso.
+
+Fondo detrás de la muñeca (pintura decorativa)
+🎨 Directamente detrás de la muñeca (y árbol), la pared debe tener una pintura grande y colorida simulando un fondo falso, estilo mural.
+📷 El mural debe mostrar:
+
+🏡 Una casita estilo rural coreano con techo rojo.
+
+🌾 Campos de trigo, césped verde y flores.
+
+⛰️ Colinas onduladas pintadas al fondo.
+
+☀️ Un cielo celeste pintado, sin nubes reales.
+
+🖌️ Todo debe parecer plano y falso, como si fuera parte de un decorado.
+
+🟥 6. Otros elementos
+➖ Línea de salida:
+
+Línea blanca gruesa al frente, marcada en el suelo, a unos 30–50 metros de la muñeca.
+
+Si es multijugador, incluye marcas adicionales (líneas verticales) para que los jugadores se alineen.
+
+🔊 Altavoz oculto en la parte superior del muro para reproducir la voz de la muñeca.
+
+🔲 Puerta negra metálica cerrada en el muro por donde los jugadores entran al campo (puede estar detrás de la línea de salida o en un lateral).
+
+✨ Recomendación de cámara de prueba
+Al iniciar, coloca la cámara en vista cenital desde arriba para asegurarte de que:
+
+La muñeca y el árbol están perfectamente centrados y alineados.
+
+El campo es simétrico.
+
+El fondo pintado no está tapado por el modelo 3D.
