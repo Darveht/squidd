@@ -1629,17 +1629,16 @@ class SquidGameSimulator {
     startAnnouncementAudio() {
         console.log('🔊 INICIANDO VIDEO DESDE LA CORNETA');
 
-        // Cambiar estado del juego para permitir movimiento
-        this.gameState = 'playing';
-        this.updateLightState('green');
+        // Mantener estado de espera - NO activar juego aún
+        this.gameState = 'waiting_for_announcement';
+        this.updateLightState('green'); // Solo visual, sin funcionalidad
 
         // Crear video directamente y reproducir
         this.createCornetaVideo();
         // Iniciar subtítulos al mismo tiempo
         this.startSubtitleSystem();
 
-        // Iniciar el bucle del juego inmediatamente
-        this.startGameLoop();
+        // NO iniciar el bucle del juego aún - solo después del anuncio
 
         // Finalizar después de 38 segundos
         setTimeout(() => {
@@ -1800,13 +1799,18 @@ class SquidGameSimulator {
     }
 
     finishAnnouncement() {
+        console.log('🎮 FINALIZANDO ANUNCIO - ACTIVANDO JUEGO REAL');
+        
         // Cambiar el estado del juego para permitir movimiento libre
         this.gameState = 'playing';
         
         // Mostrar indicador visual de que el juego comenzó
         this.showGameStartIndicator();
         
-        this.makeAnnouncement("¡EL JUEGO HA COMENZADO! Ahora puedes moverte libremente.");
+        this.makeAnnouncement("¡EL JUEGO HA COMENZADO! Ahora el sistema de luz roja/verde está activo.");
+
+        // AHORA SÍ iniciar el bucle del juego con luces activas
+        this.startGameLoop();
 
         // Limpiar completamente el sistema de audio y subtítulos
         if (this.announcementAudio) {
@@ -2165,7 +2169,8 @@ class SquidGameSimulator {
     }
 
     updatePlayer() {
-        if (this.gameState !== 'playing' && this.gameState !== 'waiting_for_announcement') return;
+        // Solo permitir movimiento cuando el juego esté realmente activo
+        if (this.gameState !== 'playing') return;
 
         const speed = this.keys['ShiftLeft'] || this.keys['ShiftRight'] ? 0.12 : 0.06;
         let moved = false;
@@ -2200,26 +2205,20 @@ class SquidGameSimulator {
         this.playerPosition.x = Math.max(-24, Math.min(24, this.playerPosition.x));
         this.playerPosition.z = Math.max(-44, Math.min(45, this.playerPosition.z));
 
-        // Restricción de línea durante el anuncio - no pueden cruzar la línea de salida
-        if (this.cornetaVideo && !this.cornetaVideo.ended && this.playerPosition.z < 38) {
-            this.playerPosition.z = 38;
-            this.makeAnnouncement("¡Espera a que termine el anuncio antes de cruzar la línea!");
-        }
-
         // Log para debug - mostrar estado del juego
         if (moved) {
             console.log(`🎮 Estado del juego: ${this.gameState}, Luz: ${this.lightState}, Video terminado: ${!this.cornetaVideo || this.cornetaVideo.ended}`);
         }
 
         // Check for movement during red light (solo durante el juego activo)
-        if (this.gameState === 'playing' && moved && this.lightState === 'red' && this.dollLookingBack) {
+        if (moved && this.lightState === 'red' && this.dollLookingBack) {
             console.log('🚨 JUGADOR DETECTADO MOVIÉNDOSE DURANTE LUZ ROJA!');
-            this.triggerEliminationSequence();
+            this.triggerCinematicEliminationSequence();
             return;
         }
 
         // Check for victory (solo durante el juego activo)
-        if (this.gameState === 'playing' && this.playerPosition.z <= -44) {
+        if (this.playerPosition.z <= -44) {
             this.endGame('victory');
             return;
         }
@@ -2425,8 +2424,8 @@ class SquidGameSimulator {
         }
     }
 
-    triggerEliminationSequence() {
-        console.log('🎯 INICIANDO SECUENCIA DE ELIMINACIÓN');
+    triggerCinematicEliminationSequence() {
+        console.log('🎯 INICIANDO SECUENCIA CINEMATOGRÁFICA DE ELIMINACIÓN');
         
         // Cambiar estado para pausar el juego
         this.gameState = 'eliminating';
@@ -2437,19 +2436,41 @@ class SquidGameSimulator {
         // Anuncio de detección
         this.makeAnnouncement("¡MOVIMIENTO DETECTADO DURANTE LUZ ROJA!");
         
-        // Crear efecto de cámara lenta inmediatamente
-        this.startSlowMotionEffect();
+        // Iniciar secuencia cinematográfica completa
+        this.startCinematicDeathSequence();
+    }
+
+    startCinematicDeathSequence() {
+        console.log('🎬 INICIANDO SECUENCIA CINEMATOGRÁFICA DE MUERTE');
         
-        // Activar sistema de targeting después de 0.5 segundos
+        // 1. Efecto de detección y cámara lenta
+        this.createDetectionEffect();
+        
+        // 2. Vista de dron cinematográfica (2 segundos)
+        setTimeout(() => {
+            this.startDroneView();
+        }, 1000);
+        
+        // 3. Activar agujeros y láseres (4 segundos)
         setTimeout(() => {
             this.activateShootingHoles();
-            this.createLaserTargeting();
-        }, 500);
-        
-        // Ejecutar disparos después de 3 segundos (más tiempo para ver efectos)
-        setTimeout(() => {
-            this.executeEnhancedShootingSequence();
+            this.createCinematicLaserTargeting();
         }, 3000);
+        
+        // 4. Disparar balas giratorias 3D (6 segundos)
+        setTimeout(() => {
+            this.fireCinematic3DBullets();
+        }, 5000);
+        
+        // 5. Impacto y muerte del jugador (8 segundos)
+        setTimeout(() => {
+            this.executePlayerDeathAnimation();
+        }, 7000);
+        
+        // 6. Fin del juego (10 segundos)
+        setTimeout(() => {
+            this.endGame('caught');
+        }, 9000);
     }
 
     startSlowMotionEffect() {
@@ -3062,78 +3083,365 @@ class SquidGameSimulator {
         this.scene.add(stain);
     }
 
-    killPlayerWithEnhancedAnimation() {
-        console.log('💀 Eliminando jugador con efectos mejorados...');
+    createDetectionEffect() {
+        const detectionOverlay = document.createElement('div');
+        detectionOverlay.className = 'detection-overlay';
+        detectionOverlay.innerHTML = `
+            <div class="detection-content">
+                <div class="detection-alert">🚨 VIOLACIÓN DETECTADA 🚨</div>
+                <div class="detection-text">MOVIMIENTO DURANTE LUZ ROJA</div>
+                <div class="detection-status">INICIANDO PROTOCOLO DE ELIMINACIÓN</div>
+            </div>
+        `;
+        document.body.appendChild(detectionOverlay);
         
-        // Crear efectos de sangre masivos primero
-        this.createMassiveBloodEffect(this.player.position);
+        // Sonido de alerta
+        if (this.audioContext) {
+            this.playSound(1200, 0.5, 'square');
+        }
         
-        // Crear animación de muerte más dramática
-        const originalY = this.player.position.y;
-        const originalRotX = this.player.rotation.x;
-        const originalRotZ = this.player.rotation.z;
-        const fallDuration = 2000;
+        setTimeout(() => {
+            if (detectionOverlay.parentNode) {
+                detectionOverlay.remove();
+            }
+        }, 2000);
+    }
+
+    startDroneView() {
+        console.log('🚁 INICIANDO VISTA DE DRON');
+        
+        // Guardar posición original de la cámara
+        this.originalCameraPos = this.camera.position.clone();
+        this.originalCameraRot = { x: this.camera.rotation.x, y: this.camera.rotation.y };
+        
+        // Vista de dron elevada y cinematográfica
+        const droneHeight = 15;
+        const droneDistance = 20;
+        const playerPos = this.player.position.clone();
+        
+        // Mover cámara a vista de dron
+        this.camera.position.set(
+            playerPos.x + droneDistance,
+            droneHeight,
+            playerPos.z + droneDistance
+        );
+        
+        // Apuntar hacia el jugador
+        this.camera.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
+        
+        // Crear movimiento circular de dron
+        let angle = 0;
+        const droneAnimation = () => {
+            if (this.gameState === 'eliminating') {
+                angle += 0.02;
+                const radius = 20;
+                this.camera.position.set(
+                    playerPos.x + Math.cos(angle) * radius,
+                    droneHeight + Math.sin(angle * 2) * 2,
+                    playerPos.z + Math.sin(angle) * radius
+                );
+                this.camera.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
+                requestAnimationFrame(droneAnimation);
+            }
+        };
+        requestAnimationFrame(droneAnimation);
+    }
+
+    createCinematicLaserTargeting() {
+        console.log('🎯 CREANDO MIRA LÁSER CINEMATOGRÁFICA');
+        
+        this.cinematicLasers = [];
+        
+        // Crear múltiples láseres convergentes hacia el jugador
+        this.shootingHoles.forEach((hole, index) => {
+            if (index < 6) { // Usar 6 agujeros para efecto más dramático
+                const laserGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1);
+                const laserMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xFF0000,
+                    emissive: 0xFF0000,
+                    emissiveIntensity: 3,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const laser = new THREE.Mesh(laserGeometry, laserMaterial);
+                
+                const holePos = hole.group.position.clone();
+                const playerPos = this.player.position.clone();
+                playerPos.y += 1;
+                
+                const direction = new THREE.Vector3().subVectors(playerPos, holePos);
+                const distance = direction.length();
+                
+                laser.position.copy(holePos);
+                laser.lookAt(playerPos);
+                laser.scale.z = distance;
+                laser.position.add(direction.normalize().multiplyScalar(distance / 2));
+                
+                this.scene.add(laser);
+                this.cinematicLasers.push(laser);
+                
+                // Animación de parpadeo dramática
+                let intensity = 3;
+                const blinkLaser = () => {
+                    if (this.gameState === 'eliminating') {
+                        intensity = intensity > 1 ? 0.5 : 3;
+                        laser.material.emissiveIntensity = intensity;
+                        setTimeout(blinkLaser, 200);
+                    }
+                };
+                setTimeout(blinkLaser, index * 100);
+            }
+        });
+    }
+
+    fireCinematic3DBullets() {
+        console.log('🔫 DISPARANDO BALAS 3D CINEMATOGRÁFICAS');
+        
+        // Limpiar láseres
+        this.cinematicLasers.forEach(laser => this.scene.remove(laser));
+        
+        // Crear múltiples balas giratorias 3D
+        this.shootingHoles.forEach((hole, index) => {
+            if (index < 6) {
+                setTimeout(() => {
+                    this.createSpinning3DBullet(hole, index);
+                }, index * 200);
+            }
+        });
+        
+        // Sonido de disparos masivos
+        if (this.audioContext) {
+            this.playSound(1500, 0.5, 'square');
+            setTimeout(() => this.playSound(800, 0.8, 'sawtooth'), 200);
+        }
+    }
+
+    createSpinning3DBullet(hole, index) {
+        // Crear bala más visible y dramática
+        const bulletGeometry = new THREE.CylinderGeometry(0.1, 0.05, 0.8);
+        const bulletMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFFD700,
+            emissive: 0xFF4400,
+            emissiveIntensity: 2
+        });
+        const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+        
+        const holePos = hole.group.position.clone();
+        const playerPos = this.player.position.clone();
+        playerPos.y += 1 + (Math.random() - 0.5) * 0.5;
+        
+        bullet.position.copy(holePos);
+        bullet.lookAt(playerPos);
+        this.scene.add(bullet);
+        
+        // Crear estela de la bala
+        const trailGeometry = new THREE.CylinderGeometry(0.02, 0.02, 2);
+        const trailMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFFAA00,
+            transparent: true,
+            opacity: 0.7
+        });
+        const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+        trail.position.copy(bullet.position);
+        trail.rotation.copy(bullet.rotation);
+        this.scene.add(trail);
+        
+        // Animación de la bala con rotación 3D
+        const startPos = holePos.clone();
+        const endPos = playerPos.clone();
+        const animationDuration = 1000;
         const startTime = performance.now();
         
-        // Efecto de cámara que sigue la caída
-        this.createDeathCameraEffect();
-        
-        const animateEnhancedDeath = (currentTime) => {
+        const animateBullet = (currentTime) => {
             const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / fallDuration, 1);
+            const progress = Math.min(elapsed / animationDuration, 1);
             
-            // Caída más dramática con múltiples rotaciones
-            this.player.position.y = originalY * (1 - progress * progress); // Caída acelerada
-            this.player.rotation.x = originalRotX + progress * Math.PI * 1.5; // Múltiples vueltas
-            this.player.rotation.z = originalRotZ + (Math.random() - 0.5) * progress * Math.PI;
+            // Movimiento con rotación 3D completa
+            const currentPos = new THREE.Vector3().lerpVectors(startPos, endPos, progress);
+            bullet.position.copy(currentPos);
+            trail.position.copy(currentPos);
             
-            // Separación dramática de las partes del cuerpo
-            if (progress > 0.3) {
-                this.player.children.forEach((part, index) => {
-                    if (index > 0) {
-                        const separationForce = (progress - 0.3) * 0.1;
-                        part.position.x += (Math.random() - 0.5) * separationForce;
-                        part.position.y += Math.random() * separationForce * 0.5;
-                        part.position.z += (Math.random() - 0.5) * separationForce;
-                        part.rotation.x += (Math.random() - 0.5) * separationForce * 2;
-                        part.rotation.z += (Math.random() - 0.5) * separationForce * 2;
-                    }
-                });
-            }
+            // Rotación 360 grados en todos los ejes
+            bullet.rotation.x += 0.3;
+            bullet.rotation.y += 0.2;
+            bullet.rotation.z += 0.4;
             
-            // Efecto de desvanecimiento
-            if (progress > 0.7) {
-                const fadeProgress = (progress - 0.7) / 0.3;
-                this.player.children.forEach(part => {
-                    if (part.material) {
-                        part.material.transparent = true;
-                        part.material.opacity = 1 - fadeProgress * 0.5;
-                    }
-                });
-            }
+            trail.rotation.copy(bullet.rotation);
+            trail.scale.z = 1 + progress * 10;
+            trail.material.opacity = 0.7 * (1 - progress * 0.5);
             
             if (progress < 1) {
-                requestAnimationFrame(animateEnhancedDeath);
+                requestAnimationFrame(animateBullet);
             } else {
-                // Crear efecto final de eliminación
-                this.createFinalEliminationEffect();
+                this.scene.remove(bullet);
+                this.scene.remove(trail);
                 
-                // Terminar el juego después de la animación
-                setTimeout(() => {
-                    this.endGame('caught');
-                }, 1500);
+                // Crear impacto en el jugador
+                this.createBulletImpact(endPos);
             }
         };
         
-        // Sonidos de muerte mejorados
-        if (this.audioContext) {
-            this.playSound(440, 0.5, 'sawtooth'); // Grito inicial
-            setTimeout(() => this.playSound(220, 1, 'sawtooth'), 300);
-            setTimeout(() => this.playSound(110, 1.5, 'triangle'), 600);
-            setTimeout(() => this.playSound(55, 2, 'sine'), 1000); // Sonido final grave
+        requestAnimationFrame(animateBullet);
+    }
+
+    createBulletImpact(position) {
+        // Efecto de impacto más dramático
+        const impactGeometry = new THREE.SphereGeometry(0.3);
+        const impactMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFF0000,
+            emissive: 0xFF0000,
+            emissiveIntensity: 3
+        });
+        const impact = new THREE.Mesh(impactGeometry, impactMaterial);
+        impact.position.copy(position);
+        this.scene.add(impact);
+        
+        // Crear chispas de impacto
+        for (let i = 0; i < 15; i++) {
+            const sparkGeometry = new THREE.SphereGeometry(0.05);
+            const sparkMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xFFAA00,
+                emissive: 0xFF4400,
+                emissiveIntensity: 2
+            });
+            const spark = new THREE.Mesh(sparkGeometry, sparkMaterial);
+            
+            spark.position.copy(position);
+            spark.position.add(new THREE.Vector3(
+                (Math.random() - 0.5) * 0.5,
+                Math.random() * 0.3,
+                (Math.random() - 0.5) * 0.5
+            ));
+            
+            this.scene.add(spark);
+            
+            // Animar chispas
+            const velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.2,
+                Math.random() * 0.1 + 0.05,
+                (Math.random() - 0.5) * 0.2
+            );
+            
+            const animateSpark = () => {
+                spark.position.add(velocity);
+                velocity.y -= 0.005;
+                spark.material.emissiveIntensity *= 0.95;
+                
+                if (spark.material.emissiveIntensity > 0.1) {
+                    requestAnimationFrame(animateSpark);
+                } else {
+                    this.scene.remove(spark);
+                }
+            };
+            
+            requestAnimationFrame(animateSpark);
         }
         
-        requestAnimationFrame(animateEnhancedDeath);
+        // Limpiar impacto principal
+        setTimeout(() => {
+            this.scene.remove(impact);
+        }, 500);
+        
+        // Sonido de impacto
+        if (this.audioContext) {
+            this.playSound(600, 0.3, 'square');
+        }
+    }
+
+    executePlayerDeathAnimation() {
+        console.log('💀 EJECUTANDO ANIMACIÓN DE MUERTE DEL JUGADOR');
+        
+        // Restaurar vista normal de la cámara pero siguiendo al jugador
+        this.camera.position.set(
+            this.player.position.x + 5,
+            this.player.position.y + 3,
+            this.player.position.z + 5
+        );
+        this.camera.lookAt(this.player.position);
+        
+        // Crear animación de muerte estilo Roblox - cayendo arrodillado
+        const originalY = this.player.position.y;
+        const deathDuration = 3000;
+        const startTime = performance.now();
+        
+        // Crear efectos de sangre
+        this.createMassiveBloodEffect(this.player.position);
+        
+        const animateRobloxDeath = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / deathDuration, 1);
+            
+            if (progress < 0.3) {
+                // Fase 1: Impacto y tambalearse
+                const shakeIntensity = (0.3 - progress) / 0.3 * 0.2;
+                this.player.position.x += (Math.random() - 0.5) * shakeIntensity;
+                this.player.position.z += (Math.random() - 0.5) * shakeIntensity;
+                this.player.rotation.z = (Math.random() - 0.5) * shakeIntensity;
+            } else if (progress < 0.7) {
+                // Fase 2: Caer de rodillas (posición arrodillada)
+                const kneeProgress = (progress - 0.3) / 0.4;
+                this.player.position.y = originalY - kneeProgress * 0.8; // Bajar pero no completamente
+                this.player.rotation.x = kneeProgress * Math.PI * 0.3; // Inclinarse hacia adelante
+                
+                // Mover piernas para simular posición arrodillada
+                if (this.player.children[3] && this.player.children[4]) { // Piernas
+                    this.player.children[3].rotation.x = -kneeProgress * Math.PI * 0.8; // Pierna izquierda doblada
+                    this.player.children[4].rotation.x = -kneeProgress * Math.PI * 0.8; // Pierna derecha doblada
+                    this.player.children[3].position.y = 0.4 - kneeProgress * 0.3;
+                    this.player.children[4].position.y = 0.4 - kneeProgress * 0.3;
+                }
+                
+                // Brazos colgando
+                if (this.player.children[1] && this.player.children[2]) { // Brazos
+                    this.player.children[1].rotation.x = kneeProgress * Math.PI * 0.5; // Brazo izquierdo colgando
+                    this.player.children[2].rotation.x = kneeProgress * Math.PI * 0.5; // Brazo derecho colgando
+                }
+            } else {
+                // Fase 3: Colapso final al suelo
+                const fallProgress = (progress - 0.7) / 0.3;
+                this.player.position.y = originalY - 0.8 - fallProgress * 0.7; // Caer completamente
+                this.player.rotation.x = Math.PI * 0.3 + fallProgress * Math.PI * 0.2; // Más inclinación
+                this.player.rotation.z = fallProgress * Math.PI * 0.3; // Rotar al lado
+                
+                // Separación gradual de partes del cuerpo (estilo Roblox)
+                this.player.children.forEach((part, index) => {
+                    if (index > 0 && fallProgress > 0.5) {
+                        const separationForce = (fallProgress - 0.5) * 0.2;
+                        part.position.x += (Math.random() - 0.5) * separationForce;
+                        part.position.y += Math.random() * separationForce * 0.3;
+                        part.rotation.x += (Math.random() - 0.5) * separationForce;
+                        part.rotation.z += (Math.random() - 0.5) * separationForce;
+                    }
+                });
+                
+                // Desvanecimiento
+                if (fallProgress > 0.7) {
+                    const fadeProgress = (fallProgress - 0.7) / 0.3;
+                    this.player.children.forEach(part => {
+                        if (part.material) {
+                            part.material.transparent = true;
+                            part.material.opacity = 1 - fadeProgress * 0.6;
+                        }
+                    });
+                }
+            }
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateRobloxDeath);
+            } else {
+                // Crear efecto final
+                this.createFinalEliminationEffect();
+            }
+        };
+        
+        // Sonidos de muerte dramáticos
+        if (this.audioContext) {
+            this.playSound(440, 0.8, 'sawtooth'); // Grito de dolor
+            setTimeout(() => this.playSound(220, 1.2, 'triangle'), 500);
+            setTimeout(() => this.playSound(110, 2, 'sine'), 1500); // Suspiro final
+        }
+        
+        requestAnimationFrame(animateRobloxDeath);
     }
 
     createMassiveBloodEffect(position) {

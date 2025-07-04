@@ -1014,6 +1014,98 @@ body {
     }
 }
 
+/* Efectos cinematográficos de detección */
+.detection-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255, 0, 0, 0.8), rgba(139, 0, 0, 0.9));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3500;
+    animation: detection-flash 0.5s ease-in-out;
+}
+
+.detection-content {
+    text-align: center;
+    color: white;
+    animation: detection-zoom 0.8s ease-out;
+}
+
+.detection-alert {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 30px #FFD700, 0 0 60px #FFD700;
+    margin-bottom: 1rem;
+    animation: alert-pulse 0.5s infinite;
+    letter-spacing: 3px;
+}
+
+.detection-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    text-shadow: 0 0 20px #FFFFFF;
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+}
+
+.detection-status {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #FF4444;
+    text-shadow: 0 0 15px #FF4444;
+    letter-spacing: 1px;
+    animation: status-blink 1s infinite;
+}
+
+@keyframes detection-flash {
+    0%, 100% { 
+        background: linear-gradient(45deg, rgba(255, 0, 0, 0.8), rgba(139, 0, 0, 0.9));
+    }
+    50% { 
+        background: linear-gradient(45deg, rgba(255, 255, 255, 0.9), rgba(255, 0, 0, 0.9));
+    }
+}
+
+@keyframes detection-zoom {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes alert-pulse {
+    0%, 100% { 
+        text-shadow: 0 0 30px #FFD700, 0 0 60px #FFD700;
+        transform: scale(1);
+    }
+    50% { 
+        text-shadow: 0 0 50px #FFD700, 0 0 100px #FFD700;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes status-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+}
+
 /* Responsive para efectos de eliminación */
 @media (max-width: 768px) {
     .targeting-text {
@@ -1035,6 +1127,18 @@ body {
     
     .sphere-number {
         font-size: 3rem;
+    }
+    
+    .detection-alert {
+        font-size: 2rem;
+    }
+    
+    .detection-text {
+        font-size: 1.4rem;
+    }
+    
+    .detection-status {
+        font-size: 1rem;
     }
 }
 
