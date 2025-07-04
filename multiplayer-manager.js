@@ -17,22 +17,27 @@ class MultiplayerManager {
 
     async joinLobby() {
         try {
-            // Crear o unirse a una sala
-            const roomRef = ref(database, 'lobby/waitingRoom');
+            console.log('🎮 Uniéndose automáticamente al multijugador...');
+            
+            // Crear o unirse a una sala global
+            const roomRef = ref(database, 'game/activeRoom');
             const snapshot = await get(roomRef);
             
             if (!snapshot.exists()) {
                 // Crear nueva sala
                 await set(roomRef, {
                     created: serverTimestamp(),
-                    status: 'waiting',
-                    countdown: 30
+                    status: 'active',
+                    gameMode: 'red-light-green-light'
                 });
                 this.isHost = true;
+                console.log('🏠 Creando nueva sala multijugador');
+            } else {
+                console.log('🔗 Uniéndose a sala existente');
             }
 
             // Obtener el siguiente número de jugador disponible
-            const playersRef = ref(database, 'lobby/waitingRoom/players');
+            const playersRef = ref(database, 'game/activeRoom/players');
             const playersSnapshot = await get(playersRef);
             const existingPlayers = playersSnapshot.val() || {};
             
@@ -41,27 +46,26 @@ class MultiplayerManager {
             this.playerNumber = this.findAvailableNumber(usedNumbers);
 
             // Añadir jugador a la sala
-            const playerRef = ref(database, `lobby/waitingRoom/players/${this.playerId}`);
+            const playerRef = ref(database, `game/activeRoom/players/${this.playerId}`);
             await set(playerRef, {
                 id: this.playerId,
                 number: this.playerNumber,
                 name: `Jugador ${this.playerNumber.toString().padStart(3, '0')}`,
-                position: { x: 0, z: 40 },
+                position: { x: (Math.random() - 0.5) * 10, z: 40 }, // Posición inicial aleatoria
                 status: 'alive',
                 connected: true,
                 joinedAt: serverTimestamp()
             });
 
-            this.currentRoom = 'waitingRoom';
+            this.currentRoom = 'activeRoom';
             this.setupPlayerListeners();
             
-            if (this.isHost) {
-                this.startCountdown();
-            }
-
+            console.log(`✅ Conectado como Jugador ${this.playerNumber}`);
             return this.playerNumber;
         } catch (error) {
-            console.error('Error al unirse al lobby:', error);
+            console.error('❌ Error al unirse al lobby:', error);
+            // Generar número aleatorio como fallback
+            return Math.floor(Math.random() * 456) + 1;
         }
     }
 
@@ -76,7 +80,7 @@ class MultiplayerManager {
 
     setupPlayerListeners() {
         // Escuchar cambios en los jugadores
-        const playersRef = ref(database, `lobby/${this.currentRoom}/players`);
+        const playersRef = ref(database, `game/${this.currentRoom}/players`);
         onValue(playersRef, (snapshot) => {
             const playersData = snapshot.val();
             if (playersData) {
@@ -86,21 +90,12 @@ class MultiplayerManager {
         });
 
         // Escuchar estado del juego
-        const gameStateRef = ref(database, `lobby/${this.currentRoom}/gameState`);
+        const gameStateRef = ref(database, `game/${this.currentRoom}/gameState`);
         onValue(gameStateRef, (snapshot) => {
             const gameState = snapshot.val();
             if (gameState && gameState.status === 'started' && !this.gameStarted) {
                 this.gameStarted = true;
                 this.startGame();
-            }
-        });
-
-        // Escuchar countdown
-        const countdownRef = ref(database, `lobby/${this.currentRoom}/countdown`);
-        onValue(countdownRef, (snapshot) => {
-            const countdown = snapshot.val();
-            if (countdown !== null) {
-                this.updateCountdownDisplay(countdown);
             }
         });
     }
@@ -130,14 +125,14 @@ class MultiplayerManager {
 
     async updatePlayerPosition(x, z) {
         if (this.currentRoom && this.playerId) {
-            const positionRef = ref(database, `lobby/${this.currentRoom}/players/${this.playerId}/position`);
+            const positionRef = ref(database, `game/${this.currentRoom}/players/${this.playerId}/position`);
             await set(positionRef, { x, z });
         }
     }
 
     async updatePlayerStatus(status) {
         if (this.currentRoom && this.playerId) {
-            const statusRef = ref(database, `lobby/${this.currentRoom}/players/${this.playerId}/status`);
+            const statusRef = ref(database, `game/${this.currentRoom}/players/${this.playerId}/status`);
             await set(statusRef, status);
         }
     }
@@ -147,27 +142,25 @@ class MultiplayerManager {
     }
 
     updatePlayersDisplay() {
-        // Actualizar la visualización de jugadores en el lobby
-        if (window.game && window.game.updateMultiplayerPlayers) {
-            window.game.updateMultiplayerPlayers(this.players);
+        // Actualizar la visualización de jugadores
+        if (window.squidGame && window.squidGame.updateMultiplayerPlayers) {
+            window.squidGame.updateMultiplayerPlayers(this.players);
         }
     }
 
     updateCountdownDisplay(countdown) {
-        if (window.game && window.game.updateLobbyCountdown) {
-            window.game.updateLobbyCountdown(countdown);
-        }
+        // Ya no necesario para auto-start
+        console.log('Countdown:', countdown);
     }
 
     startGame() {
-        if (window.game && window.game.startMultiplayerGame) {
-            window.game.startMultiplayerGame(this.players, this.playerNumber);
-        }
+        // Ya no necesario para auto-start
+        console.log('Juego iniciado automáticamente');
     }
 
     async disconnect() {
         if (this.currentRoom && this.playerId) {
-            const playerRef = ref(database, `lobby/${this.currentRoom}/players/${this.playerId}`);
+            const playerRef = ref(database, `game/${this.currentRoom}/players/${this.playerId}`);
             await remove(playerRef);
         }
     }

@@ -1,5 +1,7 @@
 class SquidGameSimulator {
     constructor() {
+        // Configurar referencia global para el multijugador
+        window.squidGame = this;
         this.scene = null;
         this.camera = null;
         this.renderer = null;
@@ -114,15 +116,45 @@ class SquidGameSimulator {
     }
 
     showGameModeSelection() {
-        // Si no hay gameMode definido, mostrar lobby
-        if (!window.gameMode) {
-            window.location.href = 'lobby.html';
-            return;
-        }
+        // Automáticamente activar multijugador sin selección del usuario
+        this.autoStartMultiplayer();
+    }
 
-        // Si es multijugador, configurar el sistema
-        if (window.gameMode === 'multiplayer' && window.multiplayerData) {
-            this.setupMultiplayer(window.multiplayerData);
+    async autoStartMultiplayer() {
+        try {
+            // Importar y configurar el sistema multijugador automáticamente
+            const { default: MultiplayerManager } = await import('./multiplayer-manager.js');
+            this.multiplayerManager = new MultiplayerManager();
+            
+            // Unirse automáticamente al lobby
+            const playerNumber = await this.multiplayerManager.joinLobby();
+            console.log(`Te uniste automáticamente como Jugador ${playerNumber}`);
+            
+            // Activar modo multijugador
+            this.isMultiplayer = true;
+            this.myPlayerNumber = playerNumber;
+            
+            // Configurar el jugador principal con su número
+            this.scene.remove(this.player);
+            this.player = this.createPlayer(this.myPlayerNumber);
+            this.player.position.set(0, 0, 40);
+            this.scene.add(this.player);
+            
+            // Configurar listeners para otros jugadores
+            this.setupMultiplayerListeners();
+            
+            // Mostrar interfaz multijugador
+            this.showMultiplayerUI();
+            
+            // Iniciar el juego después de unirse
+            setTimeout(() => {
+                this.startGame();
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error al iniciar multijugador:', error);
+            // Fallback al modo individual si falla
+            this.startGame();
         }
     }
 
@@ -179,6 +211,22 @@ class SquidGameSimulator {
     updateMultiplayerPlayers(players) {
         this.multiplayerPlayers = players;
         
+        // Crear otros jugadores si no existen
+        Object.values(players).forEach(player => {
+            if (player.number !== this.myPlayerNumber && !this.playerMeshes[player.id]) {
+                const otherPlayer = this.createPlayer(player.number, true);
+                otherPlayer.position.set(
+                    player.position.x + (Math.random() - 0.5) * 5,
+                    0, 
+                    40
+                );
+                this.scene.add(otherPlayer);
+                this.playerMeshes[player.id] = otherPlayer;
+                
+                console.log(`🎮 Nuevo jugador conectado: Jugador ${player.number}`);
+            }
+        });
+        
         // Actualizar posiciones de otros jugadores
         Object.values(players).forEach(player => {
             if (player.number !== this.myPlayerNumber && this.playerMeshes[player.id]) {
@@ -188,10 +236,28 @@ class SquidGameSimulator {
             }
         });
         
-        // Contar jugadores vivos
+        // Contar jugadores vivos y actualizar UI
         const alivePlayers = Object.values(players).filter(p => p.status === 'alive').length;
         this.playersAlive = alivePlayers;
-        document.getElementById('players-alive').textContent = alivePlayers;
+        
+        // Actualizar contador principal
+        const playersAliveElement = document.getElementById('players-alive');
+        if (playersAliveElement) {
+            playersAliveElement.textContent = alivePlayers;
+        }
+        
+        // Actualizar contador en UI multijugador
+        const connectedCount = document.getElementById('connected-count');
+        if (connectedCount) {
+            connectedCount.textContent = Object.keys(players).length;
+        }
+        
+        // Mostrar notificación cuando se conecten nuevos jugadores
+        if (Object.keys(players).length > Object.keys(this.lastPlayerCount || {}).length) {
+            this.showPlayerJoinedNotification(Object.keys(players).length);
+        }
+        
+        this.lastPlayerCount = players;
     }
 
     startMultiplayerGame(players, myNumber) {
@@ -202,6 +268,80 @@ class SquidGameSimulator {
     updateLobbyCountdown(countdown) {
         // Este método se llama desde el lobby
         console.log(`Cuenta atrás: ${countdown}`);
+    }
+
+    showMultiplayerUI() {
+        // Crear interfaz de sala de espera integrada en el juego
+        const multiplayerUI = document.createElement('div');
+        multiplayerUI.id = 'in-game-multiplayer-ui';
+        multiplayerUI.innerHTML = `
+            <div class="multiplayer-status">
+                <div class="status-header">🌐 MULTIJUGADOR ACTIVO</div>
+                <div class="player-info">Eres el Jugador <span id="my-player-number">${this.myPlayerNumber}</span></div>
+                <div class="connected-players">
+                    <span>Jugadores conectados: </span>
+                    <span id="connected-count">1</span>
+                </div>
+            </div>
+        `;
+        
+        // Aplicar estilos directamente
+        multiplayerUI.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 2px solid #00d4aa;
+            font-family: 'Orbitron', monospace;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 212, 170, 0.3);
+        `;
+        
+        document.body.appendChild(multiplayerUI);
+        
+        // Auto-ocultar después de 8 segundos
+        setTimeout(() => {
+            if (multiplayerUI.parentNode) {
+                multiplayerUI.style.opacity = '0';
+                multiplayerUI.style.transition = 'opacity 1s ease';
+                setTimeout(() => multiplayerUI.remove(), 1000);
+            }
+        }, 8000);
+    }
+
+    showPlayerJoinedNotification(totalPlayers) {
+        const notification = document.createElement('div');
+        notification.innerHTML = `
+            <div class="player-joined-notification">
+                👤 Nuevo jugador se unió (${totalPlayers} total)
+            </div>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            background: linear-gradient(45deg, #4CAF50, #2E7D32);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-family: 'Orbitron', monospace;
+            z-index: 1500;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.5);
+            animation: slideInRight 0.5s ease-out;
+            transform: translateY(-50%);
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.5s ease-in';
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
     }
 
     setupScene() {
