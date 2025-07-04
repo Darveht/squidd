@@ -157,6 +157,20 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script type="module">
+        // Verificar si venimos del lobby multijugador
+        const gameData = sessionStorage.getItem('gameData');
+        if (gameData) {
+            const data = JSON.parse(gameData);
+            window.gameMode = data.mode;
+            window.multiplayerData = data;
+            sessionStorage.removeItem('gameData');
+        } else {
+            // Verificar parámetros URL para modo individual
+            const urlParams = new URLSearchParams(window.location.search);
+            window.gameMode = urlParams.get('mode') || 'single';
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>

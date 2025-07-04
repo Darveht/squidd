@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squid Game - Lobby</title>
+    <style>
+        .game-mode-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            color: white;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .mode-selection-content {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 3px solid #00d4aa;
+            box-shadow: 0 20px 60px rgba(0, 212, 170, 0.5);
+        }
+
+        .mode-selection-content h1 {
+            font-size: 3rem;
+            color: #ff1744;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 30px rgba(255, 23, 68, 0.8);
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .mode-btn {
+            background: linear-gradient(45deg, #00d4aa, #4CAF50);
+            color: white;
+            border: none;
+            padding: 1.5rem 3rem;
+            border-radius: 15px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 212, 170, 0.6);
+        }
+
+        .multiplayer-lobby {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            color: white;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .lobby-content {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 3px solid #ff1744;
+            box-shadow: 0 20px 60px rgba(255, 23, 68, 0.5);
+            min-width: 600px;
+        }
+
+        .lobby-title {
+            font-size: 2.5rem;
+            color: #ff1744;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(255, 23, 68, 0.8);
+        }
+
+        .countdown-display {
+            font-size: 4rem;
+            color: #FFD700;
+            margin: 2rem 0;
+            text-shadow: 0 0 40px #FFD700;
+            animation: countdown-pulse 1s infinite;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+        }
+
+        .player-card {
+            background: linear-gradient(135deg, #2e7d32, #4caf50);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            animation: player-appear 0.5s ease-out;
+        }
+
+        .player-number {
+            font-size: 2rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .player-status {
+            font-size: 0.8rem;
+            color: #FFD700;
+            margin-top: 0.5rem;
+        }
+
+        @keyframes player-appear {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes countdown-pulse {
+            0%, 100% { 
+                transform: scale(1);
+                color: #FFD700;
+            }
+            50% { 
+                transform: scale(1.1);
+                color: #FFF;
+            }
+        }
+
+        .lobby-info {
+            color: #ccc;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .waiting-animation {
+            display: inline-block;
+            animation: waiting-dots 1.5s infinite;
+        }
+
+        @keyframes waiting-dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-mode-selection" class="game-mode-selection">
+        <div class="mode-selection-content">
+            <h1>SQUID GAME</h1>
+            <p>Selecciona el modo de juego</p>
+            <div class="mode-buttons">
+                <button id="single-player-btn" class="mode-btn">
+                    🎮 UN JUGADOR
+                </button>
+                <button id="multiplayer-btn" class="mode-btn">
+                    👥 MULTIJUGADOR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="multiplayer-lobby" class="multiplayer-lobby">
+        <div class="lobby-content">
+            <h1 class="lobby-title">SALA DE ESPERA</h1>
+            <p class="lobby-info">Esperando que se unan más jugadores<span class="waiting-animation">...</span></p>
+            
+            <div id="countdown-display" class="countdown-display">30</div>
+            
+            <div class="players-grid" id="players-grid">
+                <!-- Los jugadores aparecerán aquí dinámicamente -->
+            </div>
+            
+            <p style="color: #888; font-size: 0.9rem;">
+                El juego comenzará automáticamente cuando termine la cuenta atrás
+            </p>
+        </div>
+    </div>
+
+    <script type="module">
+        import MultiplayerManager from './multiplayer-manager.js';
+
+        const gameMode = document.getElementById('game-mode-selection');
+        const lobby = document.getElementById('multiplayer-lobby');
+        const singlePlayerBtn = document.getElementById('single-player-btn');
+        const multiplayerBtn = document.getElementById('multiplayer-btn');
+        const playersGrid = document.getElementById('players-grid');
+        const countdownDisplay = document.getElementById('countdown-display');
+
+        let multiplayerManager = null;
+
+        singlePlayerBtn.addEventListener('click', () => {
+            gameMode.style.display = 'none';
+            // Iniciar juego individual
+            window.location.href = 'index.html?mode=single';
+        });
+
+        multiplayerBtn.addEventListener('click', async () => {
+            gameMode.style.display = 'none';
+            lobby.style.display = 'flex';
+            
+            // Inicializar sistema multijugador
+            multiplayerManager = new MultiplayerManager();
+            const playerNumber = await multiplayerManager.joinLobby();
+            
+            console.log(`Te uniste como Jugador ${playerNumber}`);
+            
+            // Configurar callbacks
+            window.updateMultiplayerPlayers = updatePlayersDisplay;
+            window.updateLobbyCountdown = updateCountdown;
+            window.startMultiplayerGame = startGame;
+        });
+
+        function updatePlayersDisplay(players) {
+            playersGrid.innerHTML = '';
+            
+            Object.values(players).forEach(player => {
+                const playerCard = document.createElement('div');
+                playerCard.className = 'player-card';
+                playerCard.innerHTML = `
+                    <div class="player-number">${player.number.toString().padStart(3, '0')}</div>
+                    <div class="player-status">${player.status === 'alive' ? 'Conectado' : 'Eliminado'}</div>
+                `;
+                playersGrid.appendChild(playerCard);
+            });
+        }
+
+        function updateCountdown(countdown) {
+            countdownDisplay.textContent = countdown;
+            
+            if (countdown <= 5) {
+                countdownDisplay.style.color = '#FF0000';
+                countdownDisplay.style.animation = 'countdown-pulse 0.5s infinite';
+            }
+        }
+
+        function startGame(players, myNumber) {
+            // Redirigir al juego principal con datos multijugador
+            const gameData = {
+                mode: 'multiplayer',
+                players: players,
+                myNumber: myNumber
+            };
+            
+            sessionStorage.setItem('gameData', JSON.stringify(gameData));
+            window.location.href = 'index.html';
+        }
+
+        // Cleanup al cerrar la página
+        window.addEventListener('beforeunload', () => {
+            if (multiplayerManager) {
+                multiplayerManager.disconnect();
+            }
+        });
+    </script>
+</body>
+</html>

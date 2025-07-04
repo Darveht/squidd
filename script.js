@@ -27,6 +27,13 @@ class SquidGameSimulator {
         this.eliminatedPlayers = [];
         this.playerProfiles = this.generatePlayerProfiles();
         this.shootingHoles = [];
+        
+        // Sistema multijugador
+        this.multiplayerManager = null;
+        this.isMultiplayer = false;
+        this.multiplayerPlayers = {};
+        this.myPlayerNumber = null;
+        this.playerMeshes = {};
 
         // Sistema de video cinematográfico
         this.cinematicVideo = null;
@@ -68,9 +75,9 @@ class SquidGameSimulator {
         this.init();
     }
 
-    init() {
+    async init() {
         this.showLoadingScreen();
-        setTimeout(() => {
+        setTimeout(async () => {
             this.setupScene();
             this.setupCamera();
             this.setupRenderer();
@@ -83,7 +90,9 @@ class SquidGameSimulator {
             this.setupSettingsMenu();
             this.setupAudio();
             this.hideLoadingScreen();
-            this.startCinematicIntro();
+            
+            // Mostrar opción de modo de juego
+            this.showGameModeSelection();
             this.animate();
         }, 3000);
     }
@@ -102,6 +111,97 @@ class SquidGameSimulator {
             loadingScreen.style.display = 'none';
             gameContainer.style.display = 'block';
         }, 500);
+    }
+
+    showGameModeSelection() {
+        // Si no hay gameMode definido, mostrar lobby
+        if (!window.gameMode) {
+            window.location.href = 'lobby.html';
+            return;
+        }
+
+        // Si es multijugador, configurar el sistema
+        if (window.gameMode === 'multiplayer' && window.multiplayerData) {
+            this.setupMultiplayer(window.multiplayerData);
+        }
+    }
+
+    async setupMultiplayer(data) {
+        this.isMultiplayer = true;
+        this.multiplayerPlayers = data.players;
+        this.myPlayerNumber = data.myNumber;
+        
+        // Importar y configurar gestor multijugador
+        const { default: MultiplayerManager } = await import('./multiplayer-manager.js');
+        this.multiplayerManager = new MultiplayerManager();
+        this.multiplayerManager.currentRoom = 'waitingRoom';
+        this.multiplayerManager.playerId = Object.keys(data.players).find(id => 
+            data.players[id].number === data.myNumber
+        );
+        this.multiplayerManager.playerNumber = data.myNumber;
+        
+        // Crear jugador principal con número
+        this.scene.remove(this.player);
+        this.player = this.createPlayer(this.myPlayerNumber);
+        this.player.position.set(0, 0, 40);
+        this.scene.add(this.player);
+        
+        // Crear otros jugadores
+        this.createOtherPlayers();
+        
+        // Configurar listeners
+        this.setupMultiplayerListeners();
+        
+        console.log(`Juego multijugador iniciado. Eres el Jugador ${this.myPlayerNumber}`);
+    }
+
+    createOtherPlayers() {
+        Object.values(this.multiplayerPlayers).forEach(player => {
+            if (player.number !== this.myPlayerNumber) {
+                const otherPlayer = this.createPlayer(player.number, true);
+                otherPlayer.position.set(
+                    player.position.x + (Math.random() - 0.5) * 5, // Distribuir horizontalmente
+                    0, 
+                    40
+                );
+                this.scene.add(otherPlayer);
+                this.playerMeshes[player.id] = otherPlayer;
+            }
+        });
+    }
+
+    setupMultiplayerListeners() {
+        if (this.multiplayerManager) {
+            this.multiplayerManager.setupPlayerListeners();
+        }
+    }
+
+    updateMultiplayerPlayers(players) {
+        this.multiplayerPlayers = players;
+        
+        // Actualizar posiciones de otros jugadores
+        Object.values(players).forEach(player => {
+            if (player.number !== this.myPlayerNumber && this.playerMeshes[player.id]) {
+                const mesh = this.playerMeshes[player.id];
+                mesh.position.x = player.position.x;
+                mesh.position.z = player.position.z;
+            }
+        });
+        
+        // Contar jugadores vivos
+        const alivePlayers = Object.values(players).filter(p => p.status === 'alive').length;
+        this.playersAlive = alivePlayers;
+        document.getElementById('players-alive').textContent = alivePlayers;
+    }
+
+    startMultiplayerGame(players, myNumber) {
+        this.setupMultiplayer({ players, myNumber });
+        this.startGame();
+    }
+
+    updateLobbyCountdown(countdown) {
+        // Este método se llama desde el lobby
+        console.log(`Cuenta atrás: ${countdown}`);
     }
 
     setupScene() {
@@ -809,18 +909,45 @@ class SquidGameSimulator {
         this.scene.add(mural);
     }
 
-    createPlayer() {
+    createPlayer(playerNumber = null, isOtherPlayer = false) {
         const playerGroup = new THREE.Group();
 
-        // Estilo Roblox - Todo cuadrado/rectangular
+        // Estilo Squid Game - Traje verde con número
         
-        // Body (torso cuadrado más grande)
+        // Body (torso cuadrado - traje verde)
         const bodyGeometry = new THREE.BoxGeometry(0.8, 1.4, 0.5);
-        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4169E1 });
+        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2E7D32 }); // Verde Squid Game
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         body.position.y = 1.2;
         body.castShadow = true;
         playerGroup.add(body);
+
+        // Número en la espalda
+        if (playerNumber !== null) {
+            const numberCanvas = document.createElement('canvas');
+            numberCanvas.width = 256;
+            numberCanvas.height = 256;
+            const ctx = numberCanvas.getContext('2d');
+            
+            // Fondo blanco para el número
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(80, 80, 96, 96);
+            
+            // Número negro
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(playerNumber.toString().padStart(3, '0'), 128, 128);
+            
+            const numberTexture = new THREE.CanvasTexture(numberCanvas);
+            const numberMaterial = new THREE.MeshBasicMaterial({ map: numberTexture });
+            
+            const numberGeometry = new THREE.PlaneGeometry(0.6, 0.6);
+            const numberPlane = new THREE.Mesh(numberGeometry, numberMaterial);
+            numberPlane.position.set(0, 1.2, -0.26); // En la espalda
+            playerGroup.add(numberPlane);
+        }
 
         // Head (cabeza completamente cuadrada)
         const headGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
@@ -2226,6 +2353,11 @@ class SquidGameSimulator {
         // Update player and camera positions suavemente
         this.player.position.set(this.playerPosition.x, 0, this.playerPosition.z);
         this.camera.position.set(this.playerPosition.x, 1.8, this.playerPosition.z);
+        
+        // Sincronizar posición en multijugador
+        if (this.isMultiplayer && this.multiplayerManager && moved) {
+            this.multiplayerManager.updatePlayerPosition(this.playerPosition.x, this.playerPosition.z);
+        }
 
         // Simple walking animation
         if (moved) {
