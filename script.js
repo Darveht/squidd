@@ -3361,6 +3361,7 @@ class SquidGameSimulator {
         
         // Crear animación de muerte estilo Roblox - cayendo arrodillado
         const originalY = this.player.position.y;
+        const groundLevel = 0; // Nivel del suelo
         const deathDuration = 3000;
         const startTime = performance.now();
         
@@ -3377,18 +3378,21 @@ class SquidGameSimulator {
                 this.player.position.x += (Math.random() - 0.5) * shakeIntensity;
                 this.player.position.z += (Math.random() - 0.5) * shakeIntensity;
                 this.player.rotation.z = (Math.random() - 0.5) * shakeIntensity;
+                // Mantener en posición original durante el impacto
+                this.player.position.y = originalY;
             } else if (progress < 0.7) {
                 // Fase 2: Caer de rodillas (posición arrodillada)
                 const kneeProgress = (progress - 0.3) / 0.4;
-                this.player.position.y = originalY - kneeProgress * 0.8; // Bajar pero no completamente
+                // Bajar gradualmente pero sin pasar del suelo
+                this.player.position.y = Math.max(groundLevel, originalY - kneeProgress * 0.8);
                 this.player.rotation.x = kneeProgress * Math.PI * 0.3; // Inclinarse hacia adelante
                 
                 // Mover piernas para simular posición arrodillada
                 if (this.player.children[3] && this.player.children[4]) { // Piernas
                     this.player.children[3].rotation.x = -kneeProgress * Math.PI * 0.8; // Pierna izquierda doblada
                     this.player.children[4].rotation.x = -kneeProgress * Math.PI * 0.8; // Pierna derecha doblada
-                    this.player.children[3].position.y = 0.4 - kneeProgress * 0.3;
-                    this.player.children[4].position.y = 0.4 - kneeProgress * 0.3;
+                    this.player.children[3].position.y = Math.max(0.1, 0.4 - kneeProgress * 0.3);
+                    this.player.children[4].position.y = Math.max(0.1, 0.4 - kneeProgress * 0.3);
                 }
                 
                 // Brazos colgando
@@ -3397,18 +3401,23 @@ class SquidGameSimulator {
                     this.player.children[2].rotation.x = kneeProgress * Math.PI * 0.5; // Brazo derecho colgando
                 }
             } else {
-                // Fase 3: Colapso final al suelo
+                // Fase 3: Colapso final al suelo - PERO SIN HUNDIR
                 const fallProgress = (progress - 0.7) / 0.3;
-                this.player.position.y = originalY - 0.8 - fallProgress * 0.7; // Caer completamente
+                // Asegurar que nunca baje del nivel del suelo (y = 0)
+                const finalY = Math.max(groundLevel, originalY - 0.8 - fallProgress * 0.5);
+                this.player.position.y = finalY;
+                
                 this.player.rotation.x = Math.PI * 0.3 + fallProgress * Math.PI * 0.2; // Más inclinación
                 this.player.rotation.z = fallProgress * Math.PI * 0.3; // Rotar al lado
                 
-                // Separación gradual de partes del cuerpo (estilo Roblox)
+                // Separación gradual de partes del cuerpo (estilo Roblox) - también con límite
                 this.player.children.forEach((part, index) => {
                     if (index > 0 && fallProgress > 0.5) {
-                        const separationForce = (fallProgress - 0.5) * 0.2;
+                        const separationForce = (fallProgress - 0.5) * 0.15; // Reducir fuerza
                         part.position.x += (Math.random() - 0.5) * separationForce;
-                        part.position.y += Math.random() * separationForce * 0.3;
+                        // Evitar que las partes caigan bajo el suelo
+                        const currentPartY = part.position.y + Math.random() * separationForce * 0.2;
+                        part.position.y = Math.max(0.05, currentPartY);
                         part.rotation.x += (Math.random() - 0.5) * separationForce;
                         part.rotation.z += (Math.random() - 0.5) * separationForce;
                     }
