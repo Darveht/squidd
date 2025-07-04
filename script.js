@@ -539,6 +539,20 @@ class SquidGameSimulator {
     }
 
     setupControls() {
+        // Variables para controles suaves
+        this.mouseX = 0;
+        this.mouseY = 0;
+        this.targetRotationX = 0;
+        this.targetRotationY = 0;
+        this.cameraSensitivity = 0.002;
+        this.cameraSmoothing = 0.1;
+        
+        // Variables para touch controls
+        this.isTouchDevice = 'ontouchstart' in window;
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchRotating = false;
+
         document.addEventListener('keydown', (event) => {
             this.keys[event.code] = true;
         });
@@ -547,8 +561,9 @@ class SquidGameSimulator {
             this.keys[event.code] = false;
         });
 
-        document.addEventListener('click', () => {
-            if (!this.mouseLocked && this.gameState === 'playing') {
+        // Mouse controls mejorados
+        document.addEventListener('click', (event) => {
+            if (!this.mouseLocked && this.gameState === 'playing' && !event.target.closest('.settings-menu') && !event.target.closest('.settings-button')) {
                 document.body.requestPointerLock();
             }
         });
@@ -559,11 +574,16 @@ class SquidGameSimulator {
 
         document.addEventListener('mousemove', (event) => {
             if (this.mouseLocked && this.gameState === 'playing') {
-                this.camera.rotation.y -= event.movementX * 0.002;
-                this.camera.rotation.x -= event.movementY * 0.002;
-                this.camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.camera.rotation.x));
+                this.targetRotationY -= event.movementX * this.cameraSensitivity;
+                this.targetRotationX -= event.movementY * this.cameraSensitivity;
+                this.targetRotationX = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.targetRotationX));
             }
         });
+
+        // Touch controls para móvil
+        if (this.isTouchDevice) {
+            this.setupTouchControls();
+        }
 
         // UI Event Listeners
         document.getElementById('restart-btn').addEventListener('click', () => {
@@ -575,44 +595,192 @@ class SquidGameSimulator {
         });
     }
 
+    setupTouchControls() {
+        // Crear joystick virtual para movimiento
+        this.createVirtualJoystick();
+        
+        // Área de rotación de cámara (toda la pantalla menos el joystick)
+        document.addEventListener('touchstart', (e) => {
+            if (this.gameState !== 'playing') return;
+            
+            const touch = e.touches[0];
+            const joystickArea = document.getElementById('virtual-joystick');
+            
+            if (!joystickArea.contains(e.target)) {
+                this.touchStartX = touch.clientX;
+                this.touchStartY = touch.clientY;
+                this.touchRotating = true;
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (this.gameState !== 'playing' || !this.touchRotating) return;
+            
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - this.touchStartX;
+            const deltaY = touch.clientY - this.touchStartY;
+            
+            this.targetRotationY -= deltaX * this.cameraSensitivity * 2;
+            this.targetRotationX -= deltaY * this.cameraSensitivity * 2;
+            this.targetRotationX = Math.max(-Math.PI/3, Math.min(Math.PI/3, this.targetRotationX));
+            
+            this.touchStartX = touch.clientX;
+            this.touchStartY = touch.clientY;
+            
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            this.touchRotating = false;
+        });
+    }
+
+    createVirtualJoystick() {
+        const joystickHTML = `
+            <div id="virtual-joystick" class="virtual-joystick">
+                <div id="joystick-knob" class="joystick-knob"></div>
+            </div>
+            <div id="run-button" class="run-button">🏃‍♂️</div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', joystickHTML);
+        
+        const joystick = document.getElementById('virtual-joystick');
+        const knob = document.getElementById('joystick-knob');
+        const runButton = document.getElementById('run-button');
+        
+        let joystickActive = false;
+        let joystickCenterX = 0;
+        let joystickCenterY = 0;
+        
+        // Joystick touch events
+        joystick.addEventListener('touchstart', (e) => {
+            if (this.gameState !== 'playing') return;
+            
+            joystickActive = true;
+            const rect = joystick.getBoundingClientRect();
+            joystickCenterX = rect.left + rect.width / 2;
+            joystickCenterY = rect.top + rect.height / 2;
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!joystickActive || this.gameState !== 'playing') return;
+            
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - joystickCenterX;
+            const deltaY = touch.clientY - joystickCenterY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 40;
+            
+            if (distance <= maxDistance) {
+                knob.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            } else {
+                const angle = Math.atan2(deltaY, deltaX);
+                const x = Math.cos(angle) * maxDistance;
+                const y = Math.sin(angle) * maxDistance;
+                knob.style.transform = `translate(${x}px, ${y}px)`;
+            }
+            
+            // Convertir a movimiento del jugador
+            const normalizedX = Math.max(-1, Math.min(1, deltaX / maxDistance));
+            const normalizedY = Math.max(-1, Math.min(1, deltaY / maxDistance));
+            
+            // Simular teclas presionadas
+            this.keys['KeyW'] = normalizedY < -0.3;
+            this.keys['KeyS'] = normalizedY > 0.3;
+            this.keys['KeyA'] = normalizedX < -0.3;
+            this.keys['KeyD'] = normalizedX > 0.3;
+            
+            e.preventDefault();
+        }, { passive: false });
+
+        joystick.addEventListener('touchend', () => {
+            joystickActive = false;
+            knob.style.transform = 'translate(0px, 0px)';
+            this.keys['KeyW'] = false;
+            this.keys['KeyS'] = false;
+            this.keys['KeyA'] = false;
+            this.keys['KeyD'] = false;
+        });
+
+        // Run button
+        runButton.addEventListener('touchstart', (e) => {
+            this.keys['ShiftLeft'] = true;
+            runButton.style.background = 'rgba(255, 107, 107, 0.8)';
+            e.preventDefault();
+        }, { passive: false });
+
+        runButton.addEventListener('touchend', () => {
+            this.keys['ShiftLeft'] = false;
+            runButton.style.background = 'rgba(0, 0, 0, 0.6)';
+        });
+    }
+
     setupSettingsMenu() {
         const settingsButton = document.getElementById('settings-button');
         const settingsMenu = document.getElementById('settings-menu');
         const closeSettings = document.getElementById('close-settings');
         
+        // Cargar configuraciones guardadas
+        this.loadSettings();
+        
         // Botón de configuración con toggle
-        settingsButton.addEventListener('click', () => {
-            if (settingsMenu.classList.contains('hidden')) {
-                settingsMenu.classList.remove('hidden');
-            } else {
-                settingsMenu.classList.add('hidden');
-            }
+        settingsButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('hidden');
         });
 
         // Cerrar configuración
-        closeSettings.addEventListener('click', () => {
+        closeSettings.addEventListener('click', (e) => {
+            e.stopPropagation();
             settingsMenu.classList.add('hidden');
         });
 
         // Cerrar al hacer clic fuera del menú
-        settingsMenu.addEventListener('click', (e) => {
-            if (e.target === settingsMenu) {
+        document.addEventListener('click', (e) => {
+            if (!settingsMenu.contains(e.target) && !settingsButton.contains(e.target)) {
                 settingsMenu.classList.add('hidden');
             }
         });
 
-        // Controles de configuración
+        // Prevenir que clicks dentro del menú lo cierren
+        settingsMenu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        // Controles de configuración con guardado automático
         document.getElementById('toggle-announcements').addEventListener('change', (e) => {
             this.settings.announcements = e.target.checked;
+            this.saveSettings();
         });
 
         document.getElementById('toggle-visual-announcements').addEventListener('change', (e) => {
             this.settings.visualAnnouncements = e.target.checked;
+            this.saveSettings();
         });
 
         document.getElementById('toggle-elimination-effects').addEventListener('change', (e) => {
             this.settings.eliminationEffects = e.target.checked;
+            this.saveSettings();
         });
+    }
+
+    loadSettings() {
+        const saved = localStorage.getItem('squidGameSettings');
+        if (saved) {
+            this.settings = { ...this.settings, ...JSON.parse(saved) };
+        }
+        
+        // Aplicar configuraciones a los checkboxes
+        document.getElementById('toggle-announcements').checked = this.settings.announcements;
+        document.getElementById('toggle-visual-announcements').checked = this.settings.visualAnnouncements;
+        document.getElementById('toggle-elimination-effects').checked = this.settings.eliminationEffects;
+    }
+
+    saveSettings() {
+        localStorage.setItem('squidGameSettings', JSON.stringify(this.settings));
     }
 
     generatePlayerProfiles() {
@@ -1119,8 +1287,17 @@ class SquidGameSimulator {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        this.updateCameraSmoothing();
         this.updatePlayer();
         this.renderer.render(this.scene, this.camera);
+    }
+
+    updateCameraSmoothing() {
+        if (this.gameState === 'playing') {
+            // Aplicar suavizado a la rotación de la cámara
+            this.camera.rotation.y += (this.targetRotationY - this.camera.rotation.y) * this.cameraSmoothing;
+            this.camera.rotation.x += (this.targetRotationX - this.camera.rotation.x) * this.cameraSmoothing;
+        }
     }
 
     handleResize() {

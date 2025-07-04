@@ -893,6 +893,61 @@ body {
     transform: scale(1.05);
 }
 
+/* Virtual Joystick para móviles */
+.virtual-joystick {
+    position: fixed;
+    bottom: 80px;
+    left: 40px;
+    width: 120px;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: none;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px rgba(0, 212, 170, 0.3);
+}
+
+.joystick-knob {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(45deg, #00d4aa, #4CAF50);
+    border: 2px solid white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease;
+    box-shadow: 0 0 20px rgba(0, 212, 170, 0.5);
+}
+
+.run-button {
+    position: fixed;
+    bottom: 80px;
+    right: 40px;
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.run-button:active {
+    transform: scale(0.9);
+    background: rgba(255, 107, 107, 0.8);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .top-ui {
@@ -902,8 +957,12 @@ body {
     }
     
     .controls-hint {
-        flex-direction: column;
-        gap: 0.5rem;
+        display: none; /* Ocultar en móvil ya que tenemos controles táctiles */
+    }
+    
+    .virtual-joystick,
+    .run-button {
+        display: flex;
     }
     
     .loading-content h1 {
@@ -927,4 +986,26 @@ body {
         margin: 1rem;
         min-width: auto;
     }
+
+    .light-indicator {
+        padding: 1.5rem 2rem;
+    }
+
+    .light {
+        width: 60px;
+        height: 60px;
+    }
+
+    .light-text {
+        font-size: 1.2rem;
+    }
+}
+
+/* Mejoras adicionales para controles suaves */
+.settings-menu {
+    pointer-events: all;
+}
+
+.settings-menu.hidden {
+    pointer-events: none;
 }
