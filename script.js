@@ -347,69 +347,146 @@ class SquidGameSimulator {
     }
 
     createSpeakerNearDoll() {
-        // Corneta/Speaker next to the doll
+        // Corneta profesional en la esquina de la pared
         const speakerGroup = new THREE.Group();
         
-        // Speaker pole
-        const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 8);
-        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
-        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-        pole.position.set(0, 4, 0);
-        pole.castShadow = true;
-        speakerGroup.add(pole);
+        // Soporte principal montado en la pared
+        const mountGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.3);
+        const mountMaterial = new THREE.MeshLambertMaterial({ color: 0x2C2C2C });
+        const mount = new THREE.Mesh(mountGeometry, mountMaterial);
+        mount.position.set(0, 0, 0);
+        mount.castShadow = true;
+        speakerGroup.add(mount);
         
-        // Speaker horn base
-        const hornBaseGeometry = new THREE.CylinderGeometry(0.8, 0.5, 1.2);
-        const hornBaseMaterial = new THREE.MeshLambertMaterial({ color: 0x2F4F4F });
-        const hornBase = new THREE.Mesh(hornBaseGeometry, hornBaseMaterial);
-        hornBase.position.set(0, 8, 0);
-        hornBase.castShadow = true;
-        speakerGroup.add(hornBase);
+        // Brazo articulado
+        const armGeometry = new THREE.BoxGeometry(0.2, 0.2, 2);
+        const armMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
+        const arm = new THREE.Mesh(armGeometry, armMaterial);
+        arm.position.set(0, 0, 1);
+        arm.castShadow = true;
+        speakerGroup.add(arm);
         
-        // Speaker horn mouth (trumpet shape)
-        const hornMouthGeometry = new THREE.ConeGeometry(1.5, 2, 12);
-        const hornMouthMaterial = new THREE.MeshLambertMaterial({ color: 0x1C1C1C });
-        const hornMouth = new THREE.Mesh(hornMouthGeometry, hornMouthMaterial);
-        hornMouth.position.set(0, 9, 0);
-        hornMouth.rotation.x = Math.PI;
-        hornMouth.castShadow = true;
-        speakerGroup.add(hornMouth);
+        // Caja principal del altavoz - más grande y robusta
+        const speakerBoxGeometry = new THREE.BoxGeometry(2.5, 3, 1.5);
+        const speakerBoxMaterial = new THREE.MeshLambertMaterial({ color: 0x1A1A1A });
+        const speakerBox = new THREE.Mesh(speakerBoxGeometry, speakerBoxMaterial);
+        speakerBox.position.set(0, 0, 2.5);
+        speakerBox.castShadow = true;
+        speakerGroup.add(speakerBox);
         
-        // Speaker grille inside horn
-        const grilleGeometry = new THREE.CircleGeometry(0.6, 16);
-        const grilleMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        // Altavoz principal circular
+        const mainSpeakerGeometry = new THREE.CylinderGeometry(1, 1, 0.3);
+        const mainSpeakerMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+        const mainSpeaker = new THREE.Mesh(mainSpeakerGeometry, mainSpeakerMaterial);
+        mainSpeaker.position.set(0, 0.3, 3.2);
+        mainSpeaker.rotation.x = Math.PI / 2;
+        speakerGroup.add(mainSpeaker);
+        
+        // Rejilla del altavoz con patrón hexagonal
+        const grilleGeometry = new THREE.CircleGeometry(0.8, 6);
+        const grilleMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x000000,
+            transparent: true,
+            opacity: 0.8
+        });
         const grille = new THREE.Mesh(grilleGeometry, grilleMaterial);
-        grille.position.set(0, 8.5, 0);
-        grille.rotation.x = -Math.PI / 2;
+        grille.position.set(0, 0.3, 3.25);
+        grille.rotation.x = Math.PI / 2;
         speakerGroup.add(grille);
         
-        // Add grid pattern to grille
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2;
-            const lineGeometry = new THREE.BoxGeometry(0.02, 0.02, 1.2);
-            const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
-            const line = new THREE.Mesh(lineGeometry, lineMaterial);
-            line.position.set(Math.cos(angle) * 0.3, 8.5, Math.sin(angle) * 0.3);
-            line.rotation.y = angle;
-            speakerGroup.add(line);
-        }
+        // Tweeter (altavoz de agudos)
+        const tweeterGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.2);
+        const tweeterMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+        const tweeter = new THREE.Mesh(tweeterGeometry, tweeterMaterial);
+        tweeter.position.set(0, -0.8, 3.2);
+        tweeter.rotation.x = Math.PI / 2;
+        speakerGroup.add(tweeter);
         
-        // Support cables
+        // Puerto de graves (bass port)
+        const bassPortGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.8);
+        const bassPortMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        const bassPort = new THREE.Mesh(bassPortGeometry, bassPortMaterial);
+        bassPort.position.set(0, -1.2, 3.2);
+        bassPort.rotation.x = Math.PI / 2;
+        speakerGroup.add(bassPort);
+        
+        // Luces LED indicadoras
         for (let i = 0; i < 3; i++) {
-            const cableGeometry = new THREE.CylinderGeometry(0.02, 0.02, 3);
-            const cableMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
-            const cable = new THREE.Mesh(cableGeometry, cableMaterial);
-            const angle = (i / 3) * Math.PI * 2;
-            cable.position.set(Math.cos(angle) * 0.3, 6, Math.sin(angle) * 0.3);
-            cable.rotation.x = Math.PI / 6;
-            speakerGroup.add(cable);
+            const ledGeometry = new THREE.SphereGeometry(0.05);
+            const ledMaterial = new THREE.MeshBasicMaterial({ 
+                color: i === 0 ? 0x00FF00 : (i === 1 ? 0xFFFF00 : 0xFF0000),
+                emissive: i === 0 ? 0x002200 : (i === 1 ? 0x222200 : 0x220000)
+            });
+            const led = new THREE.Mesh(ledGeometry, ledMaterial);
+            led.position.set((i - 1) * 0.3, 1.3, 3.2);
+            speakerGroup.add(led);
         }
         
-        // Position speaker next to doll
-        speakerGroup.position.set(6, 0, -38); // Right side of the doll
-        speakerGroup.rotation.y = -Math.PI / 4; // Angled towards the field
+        // Logo o marca del altavoz
+        const logoGeometry = new THREE.PlaneGeometry(0.8, 0.2);
+        const logoMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xFFFFFF,
+            transparent: true,
+            opacity: 0.7
+        });
+        const logo = new THREE.Mesh(logoGeometry, logoMaterial);
+        logo.position.set(0, 1, 3.25);
+        speakerGroup.add(logo);
+        
+        // Cables de conexión
+        const cableGeometry = new THREE.CylinderGeometry(0.03, 0.03, 2);
+        const cableMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+        const cable1 = new THREE.Mesh(cableGeometry, cableMaterial);
+        cable1.position.set(0.5, -1, 1);
+        cable1.rotation.z = Math.PI / 6;
+        speakerGroup.add(cable1);
+        
+        const cable2 = new THREE.Mesh(cableGeometry, cableMaterial);
+        cable2.position.set(-0.5, -1, 1);
+        cable2.rotation.z = -Math.PI / 6;
+        speakerGroup.add(cable2);
+        
+        // Posicionar en la esquina superior de la pared trasera
+        speakerGroup.position.set(-22, 9, -49.5); // Esquina izquierda alta
+        speakerGroup.rotation.y = Math.PI / 4; // Orientado hacia el campo
+        speakerGroup.rotation.x = -Math.PI / 12; // Ligeramente inclinado hacia abajo
         this.scene.add(speakerGroup);
         this.speakerNearDoll = speakerGroup;
+        
+        // Efecto de sonido visual
+        this.createSoundWaves();
+    }
+    
+    createSoundWaves() {
+        // Ondas de sonido visuales que emanan del altavoz
+        for (let i = 0; i < 5; i++) {
+            const waveGeometry = new THREE.RingGeometry(1 + i * 0.5, 1.2 + i * 0.5, 16);
+            const waveMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00FFFF,
+                transparent: true,
+                opacity: 0.1 - i * 0.02,
+                side: THREE.DoubleSide
+            });
+            const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+            wave.position.set(-22, 9, -47);
+            wave.rotation.y = Math.PI / 4;
+            
+            // Animación de ondas expansivas
+            const animate = () => {
+                wave.scale.multiplyScalar(1.002);
+                wave.material.opacity *= 0.999;
+                if (wave.material.opacity > 0.01) {
+                    requestAnimationFrame(animate);
+                } else {
+                    wave.scale.set(1, 1, 1);
+                    wave.material.opacity = 0.1 - i * 0.02;
+                    setTimeout(() => requestAnimationFrame(animate), i * 200);
+                }
+            };
+            setTimeout(() => requestAnimationFrame(animate), i * 100);
+            
+            this.scene.add(wave);
+        }
     }
 
     createLines() {
@@ -1300,18 +1377,61 @@ class SquidGameSimulator {
     }
 
     startAnnouncementAudio() {
-        // Crear elemento de audio para reproducir el video
+        // Crear elemento de audio para reproducir el video con eco
         this.announcementAudio = document.createElement('audio');
         this.announcementAudio.src = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&dl=1';
-        this.announcementAudio.volume = 0.8;
+        this.announcementAudio.volume = 1.0; // Volumen máximo
         this.announcementAudio.preload = 'auto';
+        
+        // Configurar efectos de audio con Web Audio API
+        if (this.audioContext) {
+            try {
+                const source = this.audioContext.createMediaElementSource(this.announcementAudio);
+                
+                // Crear reverb/eco
+                const convolver = this.audioContext.createConvolver();
+                const impulseBuffer = this.createImpulseResponse(4, 4, false);
+                convolver.buffer = impulseBuffer;
+                
+                // Crear filtros para simular altavoz
+                const lowpassFilter = this.audioContext.createBiquadFilter();
+                lowpassFilter.type = 'lowpass';
+                lowpassFilter.frequency.value = 8000;
+                lowpassFilter.Q.value = 1;
+                
+                const highpassFilter = this.audioContext.createBiquadFilter();
+                highpassFilter.type = 'highpass';
+                highpassFilter.frequency.value = 200;
+                highpassFilter.Q.value = 1;
+                
+                // Ganancia para amplificar
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.value = 2.0; // Amplificar 2x
+                
+                // Conectar cadena de efectos
+                source.connect(highpassFilter);
+                highpassFilter.connect(lowpassFilter);
+                lowpassFilter.connect(convolver);
+                convolver.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                // También conexión directa para mezclar
+                const dryGain = this.audioContext.createGain();
+                dryGain.gain.value = 0.7;
+                source.connect(dryGain);
+                dryGain.connect(this.audioContext.destination);
+                
+            } catch (error) {
+                console.log('Error configurando efectos de audio:', error);
+                // Continuar sin efectos
+            }
+        }
         
         // Eventos del audio
         this.announcementAudio.addEventListener('canplay', () => {
-            console.log('Audio de anuncio listo para reproducir');
+            console.log('Audio de anuncio listo para reproducir con eco');
             this.announcementAudio.play().catch(error => {
                 console.log('Error al reproducir audio:', error);
-                // Si falla, continuar sin audio después de 40 segundos
                 setTimeout(() => {
                     this.startActualGame();
                 }, 40000);
@@ -1325,17 +1445,31 @@ class SquidGameSimulator {
         
         this.announcementAudio.addEventListener('error', (e) => {
             console.log('Error en el audio:', e);
-            // Si hay error, continuar sin audio después de 40 segundos
             setTimeout(() => {
                 this.startActualGame();
             }, 40000);
         });
         
-        // Iniciar sistema de subtítulos
+        // Iniciar sistema de subtítulos mejorado
         this.startSubtitleSystem();
         
         // Cargar el audio
         this.announcementAudio.load();
+    }
+    
+    createImpulseResponse(duration, decay, reverse) {
+        const sampleRate = this.audioContext.sampleRate;
+        const length = sampleRate * duration;
+        const impulse = this.audioContext.createBuffer(2, length, sampleRate);
+        
+        for (let channel = 0; channel < 2; channel++) {
+            const channelData = impulse.getChannelData(channel);
+            for (let i = 0; i < length; i++) {
+                const n = reverse ? length - i : i;
+                channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - n / length, decay);
+            }
+        }
+        return impulse;
     }
 
     startActualGame() {
@@ -1344,36 +1478,75 @@ class SquidGameSimulator {
         this.makeAnnouncement("¡AHORA SÍ PUEDEN COMENZAR!");
         this.startGameLoop();
         
-        // Limpiar audio
+        // Limpiar completamente el sistema de audio y subtítulos
         if (this.announcementAudio) {
             this.announcementAudio.pause();
+            this.announcementAudio.currentTime = 0;
             this.announcementAudio = null;
         }
         
-        if (this.subtitleInterval) {
-            clearInterval(this.subtitleInterval);
+        // Limpiar subtítulos de forma segura
+        this.cleanupSubtitles();
+        
+        // Limpiar cualquier animación pendiente
+        if (this.typeWriterInterval) {
+            clearInterval(this.typeWriterInterval);
+            this.typeWriterInterval = null;
         }
+        
+        // Remover todos los contenedores de subtítulos
+        const allSubtitleContainers = document.querySelectorAll('[id*="subtitle-container"]');
+        allSubtitleContainers.forEach(container => {
+            if (container.parentNode) {
+                container.remove();
+            }
+        });
     }
 
     startSubtitleSystem() {
-        // Mostrar contenedor de subtítulos
+        // Limpiar cualquier subtítulo previo
+        const existingContainer = document.getElementById('subtitle-container-game');
+        if (existingContainer) {
+            existingContainer.remove();
+        }
+        
+        // Crear contenedor de subtítulos mejorado
         const subtitleContainer = document.createElement('div');
         subtitleContainer.id = 'subtitle-container-game';
         subtitleContainer.className = 'subtitle-container';
         subtitleContainer.innerHTML = '<div id="subtitle-text-game" class="subtitle-text"></div>';
         document.getElementById('ui-overlay').appendChild(subtitleContainer);
         
+        this.currentSubtitleIndex = 0;
+        this.subtitleStartTime = Date.now();
+        
         this.subtitleInterval = setInterval(() => {
             if (this.gameState !== 'waiting_for_announcement') {
-                clearInterval(this.subtitleInterval);
-                const container = document.getElementById('subtitle-container-game');
-                if (container) container.remove();
+                this.cleanupSubtitles();
                 return;
             }
             
-            const currentTime = this.announcementAudio ? this.announcementAudio.currentTime : 0;
+            const currentTime = this.announcementAudio ? this.announcementAudio.currentTime : (Date.now() - this.subtitleStartTime) / 1000;
             this.updateSubtitles(currentTime);
-        }, 100);
+        }, 200);
+    }
+    
+    cleanupSubtitles() {
+        if (this.subtitleInterval) {
+            clearInterval(this.subtitleInterval);
+            this.subtitleInterval = null;
+        }
+        
+        const container = document.getElementById('subtitle-container-game');
+        if (container) {
+            container.style.opacity = '0';
+            setTimeout(() => {
+                if (container.parentNode) {
+                    container.remove();
+                }
+            }, 500);
+        }
+        this.currentSubtitleIndex = 0;
     }
 
     updateSubtitles(currentTime) {
@@ -1382,36 +1555,62 @@ class SquidGameSimulator {
         
         if (!subtitleContainer || !subtitleText) return;
         
-        const currentSubtitle = this.subtitles.find(sub => 
-            currentTime >= sub.start && currentTime <= sub.end
-        );
+        // Buscar subtítulo actual basado en tiempo
+        let currentSubtitle = null;
+        for (let i = 0; i < this.subtitles.length; i++) {
+            const sub = this.subtitles[i];
+            if (currentTime >= sub.start && currentTime <= sub.end) {
+                currentSubtitle = sub;
+                break;
+            }
+        }
         
         if (currentSubtitle) {
+            // Solo actualizar si es un subtítulo diferente
             if (subtitleText.textContent !== currentSubtitle.text) {
                 subtitleText.textContent = currentSubtitle.text;
                 subtitleContainer.classList.add('show-subtitle');
-                this.animateSubtitleTextGame();
+                this.animateSubtitleTextGame(currentSubtitle.text);
             }
         } else {
-            subtitleContainer.classList.remove('show-subtitle');
+            // Ocultar subtítulo suavemente
+            if (subtitleContainer.classList.contains('show-subtitle')) {
+                subtitleContainer.classList.remove('show-subtitle');
+                setTimeout(() => {
+                    if (subtitleText) {
+                        subtitleText.textContent = '';
+                    }
+                }, 500);
+            }
+        }
+        
+        // Verificar si hemos terminado todos los subtítulos
+        if (currentTime > 38) { // Después del último subtítulo
+            this.cleanupSubtitles();
         }
     }
 
-    animateSubtitleTextGame() {
+    animateSubtitleTextGame(text) {
         const subtitleText = document.getElementById('subtitle-text-game');
-        if (!subtitleText) return;
+        if (!subtitleText || !text) return;
         
-        // Efecto de escritura tipo máquina
-        const text = subtitleText.textContent;
-        subtitleText.textContent = '';
+        // Limpiar cualquier animación previa
+        if (this.typeWriterInterval) {
+            clearInterval(this.typeWriterInterval);
+        }
         
-        let i = 0;
-        const typeWriter = setInterval(() => {
-            if (i < text.length) {
-                subtitleText.textContent += text.charAt(i);
-                i++;
-            } else {
-                clearInterval(typeWriter);
+        // Mostrar texto directamente sin efecto de escritura para evitar problemas
+        subtitleText.textContent = text;
+        
+        // Efecto de aparición suave
+        subtitleText.style.opacity = '0';
+        subtitleText.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            if (subtitleText) {
+                subtitleText.style.transition = 'all 0.3s ease';
+                subtitleText.style.opacity = '1';
+                subtitleText.style.transform = 'translateY(0)';
             }
         }, 50);
     }
