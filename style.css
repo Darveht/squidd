@@ -824,6 +824,14 @@ body {
     100% { width: 100%; }
 }
 
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff1744, #00d4aa);
+    border-radius: 2px;
+    animation: cinematic-progress 8s linear;
+    transform-origin: left;
+}
+
 /* Cinematic 3D Scene Overlay */
 .cinematic-scene {
     position: absolute;
@@ -846,6 +854,29 @@ body {
 @keyframes cinematic-fade {
     0%, 90% { opacity: 1; }
     100% { opacity: 0; }
+}
+
+/* Skip Intro Button */
+.skip-intro-btn {
+    position: absolute;
+    bottom: 6rem;
+    right: 2rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid #ffffff;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    z-index: 2002;
+}
+
+.skip-intro-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
 }
 
 /* Responsive Design */

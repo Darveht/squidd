@@ -663,39 +663,37 @@ class SquidGameSimulator {
         // Mostrar pantalla cinematográfica
         document.getElementById('cinematic-intro').classList.remove('hidden');
         
-        // Crear overlay para la escena 3D
-        const cinematicOverlay = document.createElement('div');
-        cinematicOverlay.className = 'cinematic-scene';
-        document.getElementById('cinematic-intro').appendChild(cinematicOverlay);
-        
         // Configurar cámara cinematográfica (vista de dron)
         this.setupCinematicCamera();
         
-        // Iniciar animación de 20 segundos
+        // Iniciar animación de 8 segundos (más corta)
         this.startCinematicAnimation();
         
         // Reproducir sonido cinematográfico
         this.playCinematicSound();
         
-        // Terminar después de 20 segundos
+        // Terminar después de 8 segundos
         setTimeout(() => {
             this.endCinematicIntro();
-        }, 20000);
+        }, 8000);
+        
+        // Botón para saltar intro
+        this.addSkipButton();
     }
 
     setupCinematicCamera() {
-        // Guardar cámara original
-        this.originalCamera = this.camera.clone();
+        // Guardar configuración original de la cámara
+        this.originalCameraPos = { ...this.camera.position };
+        this.originalCameraRot = { ...this.camera.rotation };
         
-        // Configurar cámara cinematográfica (vista desde arriba, como dron)
-        this.cinematicCamera = this.camera;
-        this.cinematicCamera.position.set(0, 80, 20); // Vista aérea
-        this.cinematicCamera.lookAt(0, 0, -20); // Mirando hacia la muñeca
+        // Configurar cámara cinematográfica (vista aérea de dron)
+        this.camera.position.set(0, 100, 50); // Muy arriba, vista desde arriba
+        this.camera.lookAt(0, 0, 0); // Mirando hacia el centro de la plataforma
     }
 
     startCinematicAnimation() {
         const startTime = performance.now();
-        const duration = 20000; // 20 segundos
+        const duration = 8000; // 8 segundos
         
         const animateCinematic = (currentTime) => {
             if (!this.cinematicActive) return;
@@ -703,31 +701,29 @@ class SquidGameSimulator {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             
-            // Animación de la cámara (movimiento de dron)
-            if (progress < 0.3) {
-                // Primeros 6 segundos: descender hacia la muñeca
-                const t = progress / 0.3;
-                this.cinematicCamera.position.y = 80 - (t * 60); // De 80 a 20
-                this.cinematicCamera.position.z = 20 - (t * 35); // De 20 a -15
-                this.cinematicCamera.lookAt(-15, 4, -35); // Mirando a la muñeca
-            } else if (progress < 0.7) {
-                // Segundos 6-14: círculo alrededor de la muñeca
-                const t = (progress - 0.3) / 0.4;
-                const angle = t * Math.PI * 2;
-                const radius = 25;
-                this.cinematicCamera.position.x = Math.sin(angle) * radius;
-                this.cinematicCamera.position.z = -35 + Math.cos(angle) * radius;
-                this.cinematicCamera.position.y = 20 + Math.sin(t * Math.PI) * 10;
-                this.cinematicCamera.lookAt(-15, 4, -35);
+            // Animación simplificada de la cámara
+            if (progress < 0.4) {
+                // Primeros 3.2 segundos: vista aérea descendiendo
+                const t = progress / 0.4;
+                this.camera.position.y = 100 - (t * 70); // De 100 a 30
+                this.camera.position.z = 50 - (t * 30); // De 50 a 20
+                this.camera.lookAt(0, 0, 0);
+            } else if (progress < 0.8) {
+                // Segundos 3.2-6.4: rotación alrededor de la plataforma
+                const t = (progress - 0.4) / 0.4;
+                const angle = t * Math.PI;
+                const radius = 40;
+                this.camera.position.x = Math.sin(angle) * radius;
+                this.camera.position.z = Math.cos(angle) * radius;
+                this.camera.position.y = 30;
+                this.camera.lookAt(0, 0, 0);
             } else {
-                // Últimos 6 segundos: alejarse para mostrar toda la plataforma
-                const t = (progress - 0.7) / 0.3;
-                this.cinematicCamera.position.set(
-                    0,
-                    30 + (t * 50), // Subir
-                    0 + (t * 60)   // Alejarse
-                );
-                this.cinematicCamera.lookAt(0, 0, 0); // Vista general
+                // Últimos 1.6 segundos: posicionarse en la línea de salida
+                const t = (progress - 0.8) / 0.2;
+                this.camera.position.x = 0;
+                this.camera.position.y = 30 - (t * 28); // De 30 a 2
+                this.camera.position.z = 50 - (t * 3);  // De 50 a 47
+                this.camera.lookAt(0, 0, 0);
             }
             
             if (progress < 1) {
@@ -736,6 +732,14 @@ class SquidGameSimulator {
         };
         
         requestAnimationFrame(animateCinematic);
+    }
+
+    addSkipButton() {
+        const skipButton = document.createElement('button');
+        skipButton.textContent = 'SALTAR INTRO';
+        skipButton.className = 'skip-intro-btn';
+        skipButton.onclick = () => this.endCinematicIntro();
+        document.getElementById('cinematic-intro').appendChild(skipButton);
     }
 
     playCinematicSound() {
@@ -783,20 +787,16 @@ class SquidGameSimulator {
     endCinematicIntro() {
         this.cinematicActive = false;
         
-        // Ocultar pantalla cinematográfica
+        // Ocultar pantalla cinematográfica inmediatamente
         const cinematicIntro = document.getElementById('cinematic-intro');
-        cinematicIntro.style.opacity = '0';
-        
-        setTimeout(() => {
-            cinematicIntro.classList.add('hidden');
-            cinematicIntro.style.opacity = '1';
-        }, 1000);
+        cinematicIntro.classList.add('hidden');
         
         // Restaurar cámara a posición de juego
         this.camera.position.set(0, 1.8, 47);
         this.camera.rotation.set(0, 0, 0);
+        this.camera.rotation.order = 'YXZ';
         
-        // Iniciar el juego
+        // Iniciar el juego inmediatamente
         this.startGame();
     }
 
@@ -846,26 +846,13 @@ class SquidGameSimulator {
     startGame() {
         this.gameState = 'preparing';
         
-        // Initial game announcement
-        setTimeout(() => {
-            this.makeAnnouncement(`¡Bienvenidos al Squid Game, Nivel ${this.currentLevel}!`);
-        }, 1000);
+        // Solo un anuncio inicial
+        this.makeAnnouncement(`¡Luz Roja, Luz Verde! Cruza la línea en 2 minutos.`);
         
-        setTimeout(() => {
-            this.makeAnnouncement(`${this.gameTitle}. Tienen 2 minutos para cruzar la línea de meta.`);
-        }, 4000);
-        
-        setTimeout(() => {
-            this.makeAnnouncement("Cuando diga LUZ VERDE, pueden moverse. Cuando diga LUZ ROJA, deben detenerse completamente.");
-        }, 8000);
-        
-        setTimeout(() => {
-            this.makeAnnouncement("Si se mueven durante LUZ ROJA... serán eliminados.");
-        }, 12000);
-        
+        // Iniciar cuenta regresiva directamente después de 3 segundos
         setTimeout(() => {
             this.startCountdown();
-        }, 16000);
+        }, 3000);
     }
 
     startCountdown() {
