@@ -1484,6 +1484,49 @@ class SquidGameSimulator {
         }, 4000);
     }
 
+    showGameStartIndicator() {
+        // Crear indicador visual prominente de inicio de juego
+        const startIndicator = document.createElement('div');
+        startIndicator.className = 'game-start-indicator';
+        startIndicator.innerHTML = `
+            <div class="start-indicator-content">
+                <div class="start-icon">🟢</div>
+                <h2>¡JUEGO INICIADO!</h2>
+                <p>Ahora puedes moverte libremente</p>
+                <div class="start-countdown">3</div>
+            </div>
+        `;
+        
+        document.body.appendChild(startIndicator);
+
+        // Countdown visual
+        let countdown = 3;
+        const countdownElement = startIndicator.querySelector('.start-countdown');
+        
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                countdownElement.textContent = countdown;
+            } else {
+                clearInterval(countdownInterval);
+                startIndicator.style.opacity = '0';
+                setTimeout(() => {
+                    if (startIndicator.parentNode) {
+                        startIndicator.remove();
+                    }
+                }, 500);
+            }
+        }, 1000);
+        
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (startIndicator.parentNode) {
+                startIndicator.style.opacity = '0';
+                setTimeout(() => startIndicator.remove(), 500);
+            }
+        }, 4000);
+    }
+
     playSound(frequency, duration, type = 'sine') {
         if (!this.audioContext) return;
 
@@ -1757,7 +1800,13 @@ class SquidGameSimulator {
     }
 
     finishAnnouncement() {
-        this.makeAnnouncement("¡El anuncio ha terminado! Ya pueden cruzar la línea.");
+        // Cambiar el estado del juego para permitir movimiento libre
+        this.gameState = 'playing';
+        
+        // Mostrar indicador visual de que el juego comenzó
+        this.showGameStartIndicator();
+        
+        this.makeAnnouncement("¡EL JUEGO HA COMENZADO! Ahora puedes moverte libremente.");
 
         // Limpiar completamente el sistema de audio y subtítulos
         if (this.announcementAudio) {
@@ -2155,6 +2204,11 @@ class SquidGameSimulator {
         if (this.cornetaVideo && !this.cornetaVideo.ended && this.playerPosition.z < 38) {
             this.playerPosition.z = 38;
             this.makeAnnouncement("¡Espera a que termine el anuncio antes de cruzar la línea!");
+        }
+
+        // Log para debug - mostrar estado del juego
+        if (moved) {
+            console.log(`🎮 Estado del juego: ${this.gameState}, Luz: ${this.lightState}, Video terminado: ${!this.cornetaVideo || this.cornetaVideo.ended}`);
         }
 
         // Check for movement during red light (solo durante el juego activo)
