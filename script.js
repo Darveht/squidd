@@ -346,6 +346,72 @@ class SquidGameSimulator {
         this.scene.add(grille);
     }
 
+    createSpeakerNearDoll() {
+        // Corneta/Speaker next to the doll
+        const speakerGroup = new THREE.Group();
+        
+        // Speaker pole
+        const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 8);
+        const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
+        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+        pole.position.set(0, 4, 0);
+        pole.castShadow = true;
+        speakerGroup.add(pole);
+        
+        // Speaker horn base
+        const hornBaseGeometry = new THREE.CylinderGeometry(0.8, 0.5, 1.2);
+        const hornBaseMaterial = new THREE.MeshLambertMaterial({ color: 0x2F4F4F });
+        const hornBase = new THREE.Mesh(hornBaseGeometry, hornBaseMaterial);
+        hornBase.position.set(0, 8, 0);
+        hornBase.castShadow = true;
+        speakerGroup.add(hornBase);
+        
+        // Speaker horn mouth (trumpet shape)
+        const hornMouthGeometry = new THREE.ConeGeometry(1.5, 2, 12);
+        const hornMouthMaterial = new THREE.MeshLambertMaterial({ color: 0x1C1C1C });
+        const hornMouth = new THREE.Mesh(hornMouthGeometry, hornMouthMaterial);
+        hornMouth.position.set(0, 9, 0);
+        hornMouth.rotation.x = Math.PI;
+        hornMouth.castShadow = true;
+        speakerGroup.add(hornMouth);
+        
+        // Speaker grille inside horn
+        const grilleGeometry = new THREE.CircleGeometry(0.6, 16);
+        const grilleMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const grille = new THREE.Mesh(grilleGeometry, grilleMaterial);
+        grille.position.set(0, 8.5, 0);
+        grille.rotation.x = -Math.PI / 2;
+        speakerGroup.add(grille);
+        
+        // Add grid pattern to grille
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const lineGeometry = new THREE.BoxGeometry(0.02, 0.02, 1.2);
+            const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            const line = new THREE.Mesh(lineGeometry, lineMaterial);
+            line.position.set(Math.cos(angle) * 0.3, 8.5, Math.sin(angle) * 0.3);
+            line.rotation.y = angle;
+            speakerGroup.add(line);
+        }
+        
+        // Support cables
+        for (let i = 0; i < 3; i++) {
+            const cableGeometry = new THREE.CylinderGeometry(0.02, 0.02, 3);
+            const cableMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const cable = new THREE.Mesh(cableGeometry, cableMaterial);
+            const angle = (i / 3) * Math.PI * 2;
+            cable.position.set(Math.cos(angle) * 0.3, 6, Math.sin(angle) * 0.3);
+            cable.rotation.x = Math.PI / 6;
+            speakerGroup.add(cable);
+        }
+        
+        // Position speaker next to doll
+        speakerGroup.position.set(6, 0, -38); // Right side of the doll
+        speakerGroup.rotation.y = -Math.PI / 4; // Angled towards the field
+        this.scene.add(speakerGroup);
+        this.speakerNearDoll = speakerGroup;
+    }
+
     createLines() {
         const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
 
@@ -743,6 +809,9 @@ class SquidGameSimulator {
 
         // Add speaker on the wall
         this.createSpeaker();
+        
+        // Add corneta/speaker next to the doll
+        this.createSpeakerNearDoll();
     }
 
     setupControls() {
@@ -1154,24 +1223,26 @@ class SquidGameSimulator {
         this.gameState = 'cinematic';
         this.cinematicActive = true;
         
-        // Crear overlay cinematográfico
+        // Crear overlay cinematográfico con vista 3D
         this.createCinematicOverlay();
         
-        // Configurar y reproducir video
+        // Configurar y reproducir video (solo audio)
         this.setupCinematicVideo();
         
         // Iniciar sistema de subtítulos
         this.startSubtitleSystem();
+        
+        // Posicionar cámara para vista cinematográfica
+        this.setupCinematicCamera();
     }
 
     createCinematicOverlay() {
         const cinematicHTML = `
             <div id="cinematic-intro" class="cinematic-intro">
-                <div id="cinematic-video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000;">
-                    <video id="cinematic-video" style="width: 100%; height: 100%; object-fit: cover; opacity: 0;">
-                        <source src="https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=b3hesihl&dl=1" type="video/mp4">
-                    </video>
-                </div>
+                <!-- Video oculto solo para audio -->
+                <video id="cinematic-video" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;">
+                    <source src="https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=b3hesihl&dl=1" type="video/mp4">
+                </video>
                 
                 <div class="cinematic-overlay">
                     <div class="cinematic-title">
@@ -1200,12 +1271,53 @@ class SquidGameSimulator {
         });
     }
 
+    setupCinematicCamera() {
+        // Posicionar cámara para vista cinematográfica del campo
+        this.camera.position.set(15, 8, 0); // Vista lateral elevada
+        this.camera.lookAt(0, 4, -38); // Mirando hacia la muñeca
+        
+        // Animación suave de cámara durante la cinemática
+        this.cinematicCameraAnimation();
+    }
+
+    cinematicCameraAnimation() {
+        let startTime = Date.now();
+        const animationDuration = 40000; // 40 segundos para recorrer el campo
+        
+        const animateCamera = () => {
+            if (!this.cinematicActive) return;
+            
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / animationDuration, 1);
+            
+            // Movimiento circular lento alrededor del campo
+            const angle = progress * Math.PI * 2;
+            const radius = 25;
+            const height = 8 + Math.sin(progress * Math.PI * 4) * 2;
+            
+            this.camera.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius - 10
+            );
+            
+            this.camera.lookAt(0, 4, -38); // Siempre mirando hacia la muñeca
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateCamera);
+            }
+        };
+        
+        requestAnimationFrame(animateCamera);
+    }
+
     setupCinematicVideo() {
         this.cinematicVideo = document.getElementById('cinematic-video');
         
         this.cinematicVideo.addEventListener('canplay', () => {
-            console.log('Video listo para reproducir');
-            this.cinematicVideo.style.opacity = '1';
+            console.log('Video listo para reproducir (solo audio)');
+            // Reproducir solo el audio, video oculto
+            this.cinematicVideo.volume = 0.8; // Volumen alto para el audio
             this.cinematicVideo.play().catch(error => {
                 console.log('Error al reproducir video:', error);
                 // Si falla el video, continuar sin él
@@ -1214,16 +1326,20 @@ class SquidGameSimulator {
         });
         
         this.cinematicVideo.addEventListener('ended', () => {
+            console.log('Video terminado, iniciando juego');
             this.skipCinematic();
         });
         
         this.cinematicVideo.addEventListener('error', (e) => {
             console.log('Error en el video:', e);
-            // Si hay error, continuar sin video
-            this.skipCinematic();
+            // Si hay error, continuar sin video después de 40 segundos
+            setTimeout(() => {
+                this.skipCinematic();
+            }, 40000);
         });
         
-        // Intentar cargar el video
+        // Configurar video para solo audio
+        this.cinematicVideo.muted = false; // Asegurar que no esté silenciado
         this.cinematicVideo.load();
     }
 
@@ -1288,7 +1404,12 @@ class SquidGameSimulator {
         
         if (this.cinematicVideo) {
             this.cinematicVideo.pause();
+            this.cinematicVideo.currentTime = 0;
         }
+        
+        // Restaurar posición de cámara del jugador
+        this.camera.position.set(0, 1.8, 42);
+        this.camera.rotation.set(0, 0, 0);
         
         const cinematicIntro = document.getElementById('cinematic-intro');
         if (cinematicIntro) {

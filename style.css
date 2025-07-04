@@ -799,28 +799,23 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
+    background: transparent; /* Transparente para mostrar la escena 3D */
     z-index: 2000;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: opacity 1s ease;
-}
-
-#cinematic-video-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #000000;
+    pointer-events: none; /* Permitir que la escena 3D se vea a través */
 }
 
 #cinematic-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: opacity 2s ease;
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .cinematic-overlay {
@@ -835,6 +830,14 @@ body {
     justify-content: space-between;
     align-items: center;
     pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.7) 0%,
+        rgba(0, 0, 0, 0.3) 30%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0.3) 70%,
+        rgba(0, 0, 0, 0.7) 100%
+    );
 }
 
 .subtitle-container {
@@ -975,7 +978,7 @@ body {
     position: absolute;
     bottom: 3rem;
     right: 3rem;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
     border: 2px solid #ff1744;
     color: white;
     padding: 1rem 2rem;
