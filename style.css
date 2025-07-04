@@ -835,6 +835,207 @@ body {
     }
 }
 
+/* Efectos de eliminación mejorados */
+.slow-motion-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    animation: slow-motion-appear 0.5s ease-out;
+}
+
+.targeting-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    color: #FF4400;
+    font-weight: 900;
+    text-shadow: 0 0 20px #FF4400;
+    margin-bottom: 2rem;
+    letter-spacing: 3px;
+    animation: targeting-pulse 1s infinite;
+}
+
+.elimination-countdown {
+    font-family: 'Orbitron', monospace;
+    font-size: 8rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 40px #FFD700, 0 0 80px #FFD700;
+    animation: countdown-dramatic 0.6s ease-in-out;
+}
+
+.final-elimination-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(139, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4000;
+    animation: final-elimination-appear 1s ease-out;
+}
+
+.elimination-sphere {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, #FF0000, #8B0000, #000000);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 5px solid #FFD700;
+    box-shadow: 
+        0 0 50px #FF0000,
+        0 0 100px #FF0000,
+        inset 0 0 50px rgba(0, 0, 0, 0.8);
+    animation: elimination-sphere-pulse 2s ease-in-out infinite;
+}
+
+.sphere-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 30px #FFD700;
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+}
+
+.sphere-number {
+    font-family: 'Orbitron', monospace;
+    font-size: 4rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    text-shadow: 0 0 40px #FFFFFF;
+}
+
+@keyframes slow-motion-appear {
+    0% {
+        opacity: 0;
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes targeting-pulse {
+    0%, 100% {
+        text-shadow: 0 0 20px #FF4400;
+        transform: scale(1);
+    }
+    50% {
+        text-shadow: 0 0 40px #FF4400, 0 0 60px #FF4400;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes countdown-dramatic {
+    0% {
+        transform: scale(0.5) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes final-elimination-appear {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes elimination-sphere-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 
+            0 0 50px #FF0000,
+            0 0 100px #FF0000,
+            inset 0 0 50px rgba(0, 0, 0, 0.8);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 
+            0 0 80px #FF0000,
+            0 0 150px #FF0000,
+            inset 0 0 50px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* Responsive para efectos de eliminación */
+@media (max-width: 768px) {
+    .targeting-text {
+        font-size: 1.5rem;
+    }
+    
+    .elimination-countdown {
+        font-size: 6rem;
+    }
+    
+    .elimination-sphere {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .sphere-text {
+        font-size: 2rem;
+    }
+    
+    .sphere-number {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .targeting-text {
+        font-size: 1.2rem;
+    }
+    
+    .elimination-countdown {
+        font-size: 4rem;
+    }
+    
+    .elimination-sphere {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .sphere-text {
+        font-size: 1.5rem;
+    }
+    
+    .sphere-number {
+        font-size: 2.5rem;
+    }
+}
+
 /* Settings Menu */
 .settings-button {
     position: fixed;
