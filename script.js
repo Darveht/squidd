@@ -1379,8 +1379,8 @@ class SquidGameSimulator {
     startAnnouncementAudio() {
         console.log('Iniciando anuncio de la corneta...');
         
-        // Crear sonido de corneta/altavoz con Web Audio API
-        this.createSpeakerAnnouncementSound();
+        // Crear y reproducir el video real desde Dropbox
+        this.createAndPlayAnnouncementVideo();
         
         // Iniciar sistema de subtítulos inmediatamente
         this.startSubtitleSystem();
@@ -1392,28 +1392,163 @@ class SquidGameSimulator {
         }, 38000);
     }
     
+    createAndPlayAnnouncementVideo() {
+        console.log('Creando reproductor de video desde Dropbox...');
+        
+        // Crear elemento de video oculto pero funcional
+        if (this.announcementVideo) {
+            this.announcementVideo.remove();
+        }
+        
+        this.announcementVideo = document.createElement('video');
+        this.announcementVideo.id = 'announcement-video';
+        this.announcementVideo.style.position = 'absolute';
+        this.announcementVideo.style.top = '-9999px';
+        this.announcementVideo.style.left = '-9999px';
+        this.announcementVideo.style.width = '1px';
+        this.announcementVideo.style.height = '1px';
+        this.announcementVideo.style.opacity = '0';
+        this.announcementVideo.style.pointerEvents = 'none';
+        this.announcementVideo.preload = 'auto';
+        this.announcementVideo.controls = false;
+        this.announcementVideo.muted = false;
+        this.announcementVideo.volume = 0.8; // Volumen alto para simular corneta
+        
+        // URL directa de descarga de Dropbox
+        const videoUrl = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=yz2ze6h6&dl=1';
+        
+        this.announcementVideo.src = videoUrl;
+        
+        // Agregar al DOM
+        document.body.appendChild(this.announcementVideo);
+        
+        // Configurar eventos del video
+        this.announcementVideo.addEventListener('loadeddata', () => {
+            console.log('Video cargado, iniciando reproducción...');
+            this.playVideoWithSpeakerEffect();
+        });
+        
+        this.announcementVideo.addEventListener('error', (e) => {
+            console.error('Error cargando video:', e);
+            // Fallback al sistema de sonido artificial
+            this.createSpeakerAnnouncementSound();
+        });
+        
+        this.announcementVideo.addEventListener('ended', () => {
+            console.log('Video terminado');
+            this.cleanupAnnouncementVideo();
+        });
+        
+        // Intentar cargar el video
+        this.announcementVideo.load();
+        
+        // Crear efectos visuales de sonido desde la corneta
+        this.createSpeakerSoundEffects();
+    }
+    
+    playVideoWithSpeakerEffect() {
+        try {
+            // Aplicar efectos de audio para simular altavoz/corneta
+            if (this.audioContext && this.announcementVideo) {
+                // Crear fuente de audio desde el video
+                const source = this.audioContext.createMediaElementSource(this.announcementVideo);
+                
+                // Filtros para simular sonido de corneta/altavoz
+                const lowPassFilter = this.audioContext.createBiquadFilter();
+                lowPassFilter.type = 'lowpass';
+                lowPassFilter.frequency.value = 3000; // Cortar frecuencias altas
+                lowPassFilter.Q.value = 1;
+                
+                const bandPassFilter = this.audioContext.createBiquadFilter();
+                bandPassFilter.type = 'bandpass';
+                bandPassFilter.frequency.value = 1200; // Enfatizar frecuencias medias
+                bandPassFilter.Q.value = 2;
+                
+                // Compressor para simular distorsión de altavoz
+                const compressor = this.audioContext.createDynamicsCompressor();
+                compressor.threshold.value = -20;
+                compressor.knee.value = 40;
+                compressor.ratio.value = 12;
+                compressor.attack.value = 0.003;
+                compressor.release.value = 0.25;
+                
+                // Ganancia para volumen alto
+                const gainNode = this.audioContext.createGain();
+                gainNode.gain.value = 1.2; // Volumen alto como corneta
+                
+                // Conectar la cadena de efectos
+                source.connect(lowPassFilter);
+                lowPassFilter.connect(bandPassFilter);
+                bandPassFilter.connect(compressor);
+                compressor.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                console.log('Efectos de altavoz aplicados');
+            }
+            
+            // Reproducir el video
+            const playPromise = this.announcementVideo.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Video reproduciéndose correctamente desde la corneta');
+                }).catch(error => {
+                    console.error('Error reproduciendo video:', error);
+                    // Fallback
+                    this.createSpeakerAnnouncementSound();
+                });
+            }
+            
+        } catch (error) {
+            console.error('Error configurando efectos de audio:', error);
+            // Fallback al sistema artificial
+            this.createSpeakerAnnouncementSound();
+        }
+    }
+    
+    createSpeakerSoundEffects() {
+        // Efectos visuales de ondas sonoras desde la corneta
+        if (this.speakerNearDoll) {
+            // Animar las ondas sonoras durante la reproducción
+            const waves = this.scene.children.filter(child => 
+                child.geometry && child.geometry.type === 'RingGeometry'
+            );
+            
+            waves.forEach((wave, index) => {
+                const animateWave = () => {
+                    if (this.gameState === 'waiting_for_announcement') {
+                        wave.scale.multiplyScalar(1.005);
+                        wave.material.opacity = Math.sin(Date.now() * 0.01 + index) * 0.1 + 0.05;
+                        requestAnimationFrame(animateWave);
+                    }
+                };
+                setTimeout(() => requestAnimationFrame(animateWave), index * 100);
+            });
+        }
+    }
+    
     createSpeakerAnnouncementSound() {
+        // Fallback: sonido artificial si el video no funciona
         if (!this.audioContext) return;
+        
+        console.log('Usando sonido artificial como fallback...');
         
         // Crear sonido de fondo de corneta/altavoz
         const createStaticNoise = () => {
-            const bufferSize = this.audioContext.sampleRate * 0.5; // 0.5 segundos
+            const bufferSize = this.audioContext.sampleRate * 0.5;
             const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
             const output = buffer.getChannelData(0);
             
             for (let i = 0; i < bufferSize; i++) {
-                output[i] = (Math.random() * 2 - 1) * 0.1; // Ruido suave
+                output[i] = (Math.random() * 2 - 1) * 0.1;
             }
             
             return buffer;
         };
         
-        // Reproducir sonido de estática de fondo durante todo el anuncio
         const staticSource = this.audioContext.createBufferSource();
         staticSource.buffer = createStaticNoise();
         staticSource.loop = true;
         
-        // Filtro para simular altavoz
         const filter = this.audioContext.createBiquadFilter();
         filter.type = 'bandpass';
         filter.frequency.value = 1000;
@@ -1428,29 +1563,26 @@ class SquidGameSimulator {
         
         staticSource.start();
         
-        // Detener después de 38 segundos
         setTimeout(() => {
             staticSource.stop();
         }, 38000);
         
-        // Sonidos de corneta periódicos
         this.playSpeakerBeeps();
     }
     
     playSpeakerBeeps() {
-        const beepTimes = [0, 2000, 8000, 15000, 22000, 30000]; // Momentos para beeps
+        const beepTimes = [0, 2000, 8000, 15000, 22000, 30000];
         
         beepTimes.forEach(time => {
             setTimeout(() => {
                 if (this.audioContext) {
-                    // Beep de corneta
                     const oscillator = this.audioContext.createOscillator();
                     const gainNode = this.audioContext.createGain();
                     
                     oscillator.connect(gainNode);
                     gainNode.connect(this.audioContext.destination);
                     
-                    oscillator.frequency.value = 800; // Frecuencia de corneta
+                    oscillator.frequency.value = 800;
                     oscillator.type = 'square';
                     
                     const now = this.audioContext.currentTime;
@@ -1463,6 +1595,17 @@ class SquidGameSimulator {
                 }
             }, time);
         });
+    }
+    
+    cleanupAnnouncementVideo() {
+        if (this.announcementVideo) {
+            this.announcementVideo.pause();
+            this.announcementVideo.currentTime = 0;
+            if (this.announcementVideo.parentNode) {
+                this.announcementVideo.remove();
+            }
+            this.announcementVideo = null;
+        }
     }
     
     createImpulseResponse(duration, decay, reverse) {
@@ -1492,6 +1635,9 @@ class SquidGameSimulator {
             this.announcementAudio.currentTime = 0;
             this.announcementAudio = null;
         }
+        
+        // Limpiar video de anuncio
+        this.cleanupAnnouncementVideo();
         
         // Limpiar subtítulos de forma segura
         this.cleanupSubtitles();
