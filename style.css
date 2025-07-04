@@ -633,10 +633,10 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    width: 50px;
-    height: 50px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid #00d4aa;
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 3px solid #00d4aa;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -644,17 +644,30 @@ body {
     cursor: pointer;
     z-index: 200;
     transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 0 20px rgba(0, 212, 170, 0.3);
+    pointer-events: all;
 }
 
 .settings-button:hover {
     background: rgba(0, 212, 170, 0.2);
     transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(0, 212, 170, 0.5);
+}
+
+.settings-button:active {
+    transform: scale(0.95);
 }
 
 .settings-button span {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     filter: drop-shadow(0 0 10px #00d4aa);
+    animation: settings-rotate 4s linear infinite;
+}
+
+@keyframes settings-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .settings-menu {
@@ -749,6 +762,7 @@ body {
     align-items: center;
     justify-content: center;
     transition: opacity 1s ease;
+    backdrop-filter: blur(5px);
 }
 
 .cinematic-overlay {

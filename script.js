@@ -579,14 +579,29 @@ class SquidGameSimulator {
     }
 
     setupSettingsMenu() {
-        // Botón de configuración
-        document.getElementById('settings-button').addEventListener('click', () => {
-            document.getElementById('settings-menu').classList.remove('hidden');
+        const settingsButton = document.getElementById('settings-button');
+        const settingsMenu = document.getElementById('settings-menu');
+        const closeSettings = document.getElementById('close-settings');
+        
+        // Botón de configuración con toggle
+        settingsButton.addEventListener('click', () => {
+            if (settingsMenu.classList.contains('hidden')) {
+                settingsMenu.classList.remove('hidden');
+            } else {
+                settingsMenu.classList.add('hidden');
+            }
         });
 
         // Cerrar configuración
-        document.getElementById('close-settings').addEventListener('click', () => {
-            document.getElementById('settings-menu').classList.add('hidden');
+        closeSettings.addEventListener('click', () => {
+            settingsMenu.classList.add('hidden');
+        });
+
+        // Cerrar al hacer clic fuera del menú
+        settingsMenu.addEventListener('click', (e) => {
+            if (e.target === settingsMenu) {
+                settingsMenu.classList.add('hidden');
+            }
         });
 
         // Controles de configuración
@@ -686,9 +701,13 @@ class SquidGameSimulator {
         this.originalCameraPos = { ...this.camera.position };
         this.originalCameraRot = { ...this.camera.rotation };
         
-        // Configurar cámara cinematográfica (vista aérea de dron)
-        this.camera.position.set(0, 100, 50); // Muy arriba, vista desde arriba
+        // Configurar cámara cinematográfica (vista aérea de dron desde muy arriba)
+        this.camera.position.set(0, 120, 80); // Muy arriba, vista desde arriba
         this.camera.lookAt(0, 0, 0); // Mirando hacia el centro de la plataforma
+        
+        // Configurar campo de visión más amplio para vista de dron
+        this.camera.fov = 60;
+        this.camera.updateProjectionMatrix();
     }
 
     startCinematicAnimation() {
@@ -701,29 +720,64 @@ class SquidGameSimulator {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             
-            // Animación simplificada de la cámara
-            if (progress < 0.4) {
-                // Primeros 3.2 segundos: vista aérea descendiendo
-                const t = progress / 0.4;
-                this.camera.position.y = 100 - (t * 70); // De 100 a 30
-                this.camera.position.z = 50 - (t * 30); // De 50 a 20
+            // Animación cinematográfica completa del dron
+            if (progress < 0.25) {
+                // Primeros 2 segundos: vista aérea muy alta, panorámica general
+                const t = progress / 0.25;
+                this.camera.position.set(0, 120 - (t * 20), 80 - (t * 20)); // Descender lentamente
                 this.camera.lookAt(0, 0, 0);
-            } else if (progress < 0.8) {
-                // Segundos 3.2-6.4: rotación alrededor de la plataforma
-                const t = (progress - 0.4) / 0.4;
-                const angle = t * Math.PI;
-                const radius = 40;
-                this.camera.position.x = Math.sin(angle) * radius;
-                this.camera.position.z = Math.cos(angle) * radius;
-                this.camera.position.y = 30;
-                this.camera.lookAt(0, 0, 0);
+                
+            } else if (progress < 0.5) {
+                // Segundos 2-4: vuelo circular alrededor de la muñeca
+                const t = (progress - 0.25) / 0.25;
+                const angle = t * Math.PI * 2; // Círculo completo
+                const radius = 60;
+                const dollPos = this.doll.position;
+                
+                this.camera.position.x = dollPos.x + Math.sin(angle) * radius;
+                this.camera.position.z = dollPos.z + Math.cos(angle) * radius;
+                this.camera.position.y = 80 - (t * 40); // De 80 a 40
+                this.camera.lookAt(dollPos.x, dollPos.y + 3, dollPos.z);
+                
+            } else if (progress < 0.75) {
+                // Segundos 4-6: acercamiento a la muñeca en espiral
+                const t = (progress - 0.5) / 0.25;
+                const angle = t * Math.PI * 3; // Espiral
+                const radius = 40 - (t * 25); // De 40 a 15
+                const dollPos = this.doll.position;
+                
+                this.camera.position.x = dollPos.x + Math.sin(angle) * radius;
+                this.camera.position.z = dollPos.z + Math.cos(angle) * radius;
+                this.camera.position.y = 40 - (t * 20); // De 40 a 20
+                this.camera.lookAt(dollPos.x, dollPos.y + 2, dollPos.z);
+                
             } else {
-                // Últimos 1.6 segundos: posicionarse en la línea de salida
-                const t = (progress - 0.8) / 0.2;
-                this.camera.position.x = 0;
-                this.camera.position.y = 30 - (t * 28); // De 30 a 2
-                this.camera.position.z = 50 - (t * 3);  // De 50 a 47
-                this.camera.lookAt(0, 0, 0);
+                // Últimos 2 segundos: alejarse y posicionarse en línea de salida
+                const t = (progress - 0.75) / 0.25;
+                
+                // Transición suave hacia la posición del jugador
+                const startX = this.camera.position.x;
+                const startY = this.camera.position.y;
+                const startZ = this.camera.position.z;
+                
+                const targetX = 0;
+                const targetY = 25 - (t * 23); // De 25 a 2
+                const targetZ = 60 - (t * 13); // De 60 a 47
+                
+                this.camera.position.x = startX + (targetX - startX) * t;
+                this.camera.position.y = startY + (targetY - startY) * t;
+                this.camera.position.z = startZ + (targetZ - startZ) * t;
+                
+                // Mirar hacia la muñeca al principio, luego hacia adelante
+                if (t < 0.5) {
+                    this.camera.lookAt(this.doll.position.x, this.doll.position.y + 2, this.doll.position.z);
+                } else {
+                    const lookT = (t - 0.5) / 0.5;
+                    const lookX = this.doll.position.x * (1 - lookT);
+                    const lookY = (this.doll.position.y + 2) * (1 - lookT);
+                    const lookZ = this.doll.position.z * (1 - lookT) + (-30) * lookT;
+                    this.camera.lookAt(lookX, lookY, lookZ);
+                }
             }
             
             if (progress < 1) {
@@ -787,17 +841,47 @@ class SquidGameSimulator {
     endCinematicIntro() {
         this.cinematicActive = false;
         
-        // Ocultar pantalla cinematográfica inmediatamente
+        // Ocultar pantalla cinematográfica con transición
         const cinematicIntro = document.getElementById('cinematic-intro');
-        cinematicIntro.classList.add('hidden');
+        cinematicIntro.style.opacity = '0';
+        setTimeout(() => {
+            cinematicIntro.classList.add('hidden');
+            cinematicIntro.style.opacity = '1';
+        }, 1000);
         
-        // Restaurar cámara a posición de juego
-        this.camera.position.set(0, 1.8, 47);
-        this.camera.rotation.set(0, 0, 0);
-        this.camera.rotation.order = 'YXZ';
+        // Restaurar cámara a posición de juego con transición suave
+        const transitionDuration = 1000;
+        const startTime = performance.now();
+        const startPos = { ...this.camera.position };
+        const startRot = { ...this.camera.rotation };
         
-        // Iniciar el juego inmediatamente
-        this.startGame();
+        const targetPos = { x: 0, y: 1.8, z: 47 };
+        const targetRot = { x: 0, y: 0, z: 0 };
+        
+        const transitionCamera = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / transitionDuration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            
+            this.camera.position.x = startPos.x + (targetPos.x - startPos.x) * easeProgress;
+            this.camera.position.y = startPos.y + (targetPos.y - startPos.y) * easeProgress;
+            this.camera.position.z = startPos.z + (targetPos.z - startPos.z) * easeProgress;
+            
+            this.camera.rotation.x = startRot.x + (targetRot.x - startRot.x) * easeProgress;
+            this.camera.rotation.y = startRot.y + (targetRot.y - startRot.y) * easeProgress;
+            this.camera.rotation.z = startRot.z + (targetRot.z - startRot.z) * easeProgress;
+            
+            if (progress < 1) {
+                requestAnimationFrame(transitionCamera);
+            } else {
+                this.camera.rotation.order = 'YXZ';
+                this.camera.fov = 75; // Restaurar FOV original
+                this.camera.updateProjectionMatrix();
+                this.startGame();
+            }
+        };
+        
+        requestAnimationFrame(transitionCamera);
     }
 
     makeAnnouncement(text, showVisual = true) {
