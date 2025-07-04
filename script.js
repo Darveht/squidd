@@ -1586,13 +1586,21 @@ class SquidGameSimulator {
     startAnnouncementAudio() {
         console.log('🔊 INICIANDO VIDEO DESDE LA CORNETA');
 
+        // Cambiar estado del juego para permitir movimiento
+        this.gameState = 'playing';
+        this.updateLightState('green');
+
         // Crear video directamente y reproducir
-        this.createCornetaVideo();        // Iniciar subtítulos al mismo tiempo
+        this.createCornetaVideo();
+        // Iniciar subtítulos al mismo tiempo
         this.startSubtitleSystem();
+
+        // Iniciar el bucle del juego inmediatamente
+        this.startGameLoop();
 
         // Finalizar después de 38 segundos
         setTimeout(() => {
-            this.startActualGame();
+            this.finishAnnouncement();
         }, 38000);
     }
 
@@ -1748,11 +1756,8 @@ class SquidGameSimulator {
         return impulse;
     }
 
-    startActualGame() {
-        this.gameState = 'playing';
-        this.updateLightState('green');
-        this.makeAnnouncement("¡AHORA SÍ PUEDEN COMENZAR!");
-        this.startGameLoop();
+    finishAnnouncement() {
+        this.makeAnnouncement("¡El anuncio ha terminado! Ya pueden cruzar la línea.");
 
         // Limpiar completamente el sistema de audio y subtítulos
         if (this.announcementAudio) {
@@ -2145,6 +2150,12 @@ class SquidGameSimulator {
         // Boundary checking
         this.playerPosition.x = Math.max(-24, Math.min(24, this.playerPosition.x));
         this.playerPosition.z = Math.max(-44, Math.min(45, this.playerPosition.z));
+
+        // Restricción de línea durante el anuncio - no pueden cruzar la línea de salida
+        if (this.cornetaVideo && !this.cornetaVideo.ended && this.playerPosition.z < 38) {
+            this.playerPosition.z = 38;
+            this.makeAnnouncement("¡Espera a que termine el anuncio antes de cruzar la línea!");
+        }
 
         // Check for movement during red light (solo durante el juego activo)
         if (this.gameState === 'playing' && moved && this.lightState === 'red' && this.dollLookingBack) {
