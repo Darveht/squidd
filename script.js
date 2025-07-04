@@ -26,7 +26,8 @@ class SquidGameSimulator {
         this.countdownTime = 5;
         this.eliminatedPlayers = [];
         this.playerProfiles = this.generatePlayerProfiles();
-        
+        this.shootingHoles = [];
+
         // Sistema de video cinematográfico
         this.cinematicVideo = null;
         this.cinematicActive = false;
@@ -350,7 +351,7 @@ class SquidGameSimulator {
     createSpeakerNearDoll() {
         // Corneta profesional en la esquina de la pared
         const speakerGroup = new THREE.Group();
-        
+
         // Soporte principal montado en la pared
         const mountGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.3);
         const mountMaterial = new THREE.MeshLambertMaterial({ color: 0x2C2C2C });
@@ -358,7 +359,7 @@ class SquidGameSimulator {
         mount.position.set(0, 0, 0);
         mount.castShadow = true;
         speakerGroup.add(mount);
-        
+
         // Brazo articulado
         const armGeometry = new THREE.BoxGeometry(0.2, 0.2, 2);
         const armMaterial = new THREE.MeshLambertMaterial({ color: 0x404040 });
@@ -366,7 +367,7 @@ class SquidGameSimulator {
         arm.position.set(0, 0, 1);
         arm.castShadow = true;
         speakerGroup.add(arm);
-        
+
         // Caja principal del altavoz - más grande y robusta
         const speakerBoxGeometry = new THREE.BoxGeometry(2.5, 3, 1.5);
         const speakerBoxMaterial = new THREE.MeshLambertMaterial({ color: 0x1A1A1A });
@@ -374,7 +375,7 @@ class SquidGameSimulator {
         speakerBox.position.set(0, 0, 2.5);
         speakerBox.castShadow = true;
         speakerGroup.add(speakerBox);
-        
+
         // Altavoz principal circular
         const mainSpeakerGeometry = new THREE.CylinderGeometry(1, 1, 0.3);
         const mainSpeakerMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
@@ -382,7 +383,7 @@ class SquidGameSimulator {
         mainSpeaker.position.set(0, 0.3, 3.2);
         mainSpeaker.rotation.x = Math.PI / 2;
         speakerGroup.add(mainSpeaker);
-        
+
         // Rejilla del altavoz con patrón hexagonal
         const grilleGeometry = new THREE.CircleGeometry(0.8, 6);
         const grilleMaterial = new THREE.MeshBasicMaterial({ 
@@ -394,7 +395,7 @@ class SquidGameSimulator {
         grille.position.set(0, 0.3, 3.25);
         grille.rotation.x = Math.PI / 2;
         speakerGroup.add(grille);
-        
+
         // Tweeter (altavoz de agudos)
         const tweeterGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.2);
         const tweeterMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
@@ -402,7 +403,7 @@ class SquidGameSimulator {
         tweeter.position.set(0, -0.8, 3.2);
         tweeter.rotation.x = Math.PI / 2;
         speakerGroup.add(tweeter);
-        
+
         // Puerto de graves (bass port)
         const bassPortGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.8);
         const bassPortMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
@@ -410,7 +411,7 @@ class SquidGameSimulator {
         bassPort.position.set(0, -1.2, 3.2);
         bassPort.rotation.x = Math.PI / 2;
         speakerGroup.add(bassPort);
-        
+
         // Luces LED indicadoras
         for (let i = 0; i < 3; i++) {
             const ledGeometry = new THREE.SphereGeometry(0.05);
@@ -422,7 +423,7 @@ class SquidGameSimulator {
             led.position.set((i - 1) * 0.3, 1.3, 3.2);
             speakerGroup.add(led);
         }
-        
+
         // Logo o marca del altavoz
         const logoGeometry = new THREE.PlaneGeometry(0.8, 0.2);
         const logoMaterial = new THREE.MeshBasicMaterial({ 
@@ -433,7 +434,7 @@ class SquidGameSimulator {
         const logo = new THREE.Mesh(logoGeometry, logoMaterial);
         logo.position.set(0, 1, 3.25);
         speakerGroup.add(logo);
-        
+
         // Cables de conexión
         const cableGeometry = new THREE.CylinderGeometry(0.03, 0.03, 2);
         const cableMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
@@ -441,23 +442,108 @@ class SquidGameSimulator {
         cable1.position.set(0.5, -1, 1);
         cable1.rotation.z = Math.PI / 6;
         speakerGroup.add(cable1);
-        
+
         const cable2 = new THREE.Mesh(cableGeometry, cableMaterial);
         cable2.position.set(-0.5, -1, 1);
         cable2.rotation.z = -Math.PI / 6;
         speakerGroup.add(cable2);
-        
+
         // Posicionar en la esquina superior de la pared trasera
         speakerGroup.position.set(-22, 9, -49.5); // Esquina izquierda alta
         speakerGroup.rotation.y = Math.PI / 4; // Orientado hacia el campo
         speakerGroup.rotation.x = -Math.PI / 12; // Ligeramente inclinado hacia abajo
         this.scene.add(speakerGroup);
         this.speakerNearDoll = speakerGroup;
-        
+
         // Efecto de sonido visual
         this.createSoundWaves();
     }
-    
+
+    createShootingHoles() {
+        // Crear 4 agujeros de disparo en cada esquina de las paredes
+        const holePositions = [
+            // Pared trasera (esquinas superiores)
+            { x: -20, y: 8, z: -49.5, wall: 'back' },
+            { x: 20, y: 8, z: -49.5, wall: 'back' },
+            // Pared izquierda (esquinas superiores)
+            { x: -24.5, y: 8, z: -20, wall: 'left' },
+            { x: -24.5, y: 8, z: 20, wall: 'left' },
+            // Pared derecha (esquinas superiores)
+            { x: 24.5, y: 8, z: -20, wall: 'right' },
+            { x: 24.5, y: 8, z: 20, wall: 'right' },
+            // Pared frontal (esquinas superiores)
+            { x: -15, y: 8, z: 49.5, wall: 'front' },
+            { x: 15, y: 8, z: 49.5, wall: 'front' }
+        ];
+
+        holePositions.forEach((pos, index) => {
+            const holeGroup = new THREE.Group();
+
+            // Agujero principal (cilíndrico)
+            const holeGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.6);
+            const holeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const hole = new THREE.Mesh(holeGeometry, holeMaterial);
+
+            // Orientar el agujero según la pared
+            if (pos.wall === 'back' || pos.wall === 'front') {
+                hole.rotation.x = Math.PI / 2;
+            } else {
+                hole.rotation.z = Math.PI / 2;
+            }
+
+            holeGroup.add(hole);
+
+            // Marco metálico del agujero
+            const frameGeometry = new THREE.TorusGeometry(0.35, 0.05, 8, 16);
+            const frameMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+            const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+
+            if (pos.wall === 'back' || pos.wall === 'front') {
+                frame.rotation.x = Math.PI / 2;
+            } else {
+                frame.rotation.z = Math.PI / 2;
+            }
+
+            holeGroup.add(frame);
+
+            // Cañón del arma (apenas visible)
+            const barrelGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.5);
+            const barrelMaterial = new THREE.MeshLambertMaterial({ color: 0x1A1A1A });
+            const barrel = new THREE.Mesh(barrelGeometry, barrelMaterial);
+            barrel.position.set(0, 0, -0.2);
+
+            if (pos.wall === 'back' || pos.wall === 'front') {
+                barrel.rotation.x = Math.PI / 2;
+            } else {
+                barrel.rotation.z = Math.PI / 2;
+            }
+
+            holeGroup.add(barrel);
+
+            // LED indicador de estado
+            const ledGeometry = new THREE.SphereGeometry(0.05);
+            const ledMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x00FF00,
+                emissive: 0x002200,
+                emissiveIntensity: 0.5
+            });
+            const led = new THREE.Mesh(ledGeometry, ledMaterial);
+            led.position.set(0.4, 0.4, 0);
+            holeGroup.add(led);
+
+            holeGroup.position.set(pos.x, pos.y, pos.z);
+            this.scene.add(holeGroup);
+
+            this.shootingHoles.push({
+                group: holeGroup,
+                position: pos,
+                led: led,
+                barrel: barrel,
+                active: false
+            });
+        });
+    }
+
     createSoundWaves() {
         // Ondas de sonido visuales que emanan del altavoz
         for (let i = 0; i < 5; i++) {
@@ -471,7 +557,7 @@ class SquidGameSimulator {
             const wave = new THREE.Mesh(waveGeometry, waveMaterial);
             wave.position.set(-22, 9, -47);
             wave.rotation.y = Math.PI / 4;
-            
+
             // Animación de ondas expansivas
             const animate = () => {
                 wave.scale.multiplyScalar(1.002);
@@ -485,7 +571,7 @@ class SquidGameSimulator {
                 }
             };
             setTimeout(() => requestAnimationFrame(animate), i * 100);
-            
+
             this.scene.add(wave);
         }
     }
@@ -535,13 +621,13 @@ class SquidGameSimulator {
             const branch = new THREE.Mesh(branchGeometry, trunkMaterial);
             const angle = (i / 12) * Math.PI * 2;
             const height = 7 + Math.random() * 3;
-            
+
             branch.position.set(
                 Math.cos(angle) * (1 + Math.random() * 0.5),
                 height,
                 -42 + Math.sin(angle) * 0.3
             );
-            
+
             // Make branches point outward and upward
             branch.rotation.z = Math.cos(angle) * 0.8 + (Math.random() - 0.5) * 0.4;
             branch.rotation.x = Math.sin(angle) * 0.8 + (Math.random() - 0.5) * 0.4;
@@ -554,13 +640,13 @@ class SquidGameSimulator {
             const twigGeometry = new THREE.CylinderGeometry(0.02, 0.05, 0.5 + Math.random() * 1);
             const twig = new THREE.Mesh(twigGeometry, trunkMaterial);
             const angle = Math.random() * Math.PI * 2;
-            
+
             twig.position.set(
                 Math.cos(angle) * (1.5 + Math.random() * 1),
                 8 + Math.random() * 2,
                 -42 + Math.sin(angle) * 0.5
             );
-            
+
             twig.rotation.z = (Math.random() - 0.5) * Math.PI;
             twig.rotation.x = (Math.random() - 0.5) * Math.PI;
             this.scene.add(twig);
@@ -609,7 +695,7 @@ class SquidGameSimulator {
         // Korean style house with red roof
         ctx.fillStyle = '#CD853F'; // Tan walls
         ctx.fillRect(200, 120, 100, 60);
-        
+
         // Red curved roof
         ctx.fillStyle = '#DC143C';
         ctx.beginPath();
@@ -887,7 +973,7 @@ class SquidGameSimulator {
 
         // Add speaker on the wall
         this.createSpeaker();
-        
+
         // Add corneta/speaker next to the doll
         this.createSpeakerNearDoll();
     }
@@ -1194,7 +1280,7 @@ class SquidGameSimulator {
         } else {
             topUI.style.display = 'none';
         }
-        
+
         // El cronómetro se muestra independientemente si está activado
         timerContainer.style.display = this.settings.showTimer ? 'block' : 'none';
     }
@@ -1309,28 +1395,28 @@ class SquidGameSimulator {
                 <video id="cinematic-video" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;">
                     <source src="https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=b3hesihl&dl=1" type="video/mp4">
                 </video>
-                
+
                 <div class="cinematic-overlay">
                     <div class="cinematic-title">
                         <h1>SQUID GAME</h1>
                         <h2>FIRST GAME</h2>
                     </div>
-                    
+
                     <div id="subtitle-container" class="subtitle-container">
                         <div id="subtitle-text" class="subtitle-text"></div>
                     </div>
-                    
+
                     <div class="cinematic-progress">
                         <div id="progress-bar" class="progress-bar"></div>
                     </div>
-                    
+
                     <button id="skip-intro-btn" class="skip-intro-btn">SALTAR INTRODUCCIÓN</button>
                 </div>
             </div>
         `;
-        
+
         document.body.insertAdjacentHTML('beforeend', cinematicHTML);
-        
+
         // Event listener para saltar
         document.getElementById('skip-intro-btn').addEventListener('click', () => {
             this.skipCinematic();
@@ -1341,7 +1427,7 @@ class SquidGameSimulator {
         // Posicionar cámara para vista cinematográfica del campo
         this.camera.position.set(15, 8, 0); // Vista lateral elevada
         this.camera.lookAt(0, 4, -38); // Mirando hacia la muñeca
-        
+
         // Animación suave de cámara durante la cinemática
         this.cinematicCameraAnimation();
     }
@@ -1349,55 +1435,53 @@ class SquidGameSimulator {
     cinematicCameraAnimation() {
         let startTime = Date.now();
         const animationDuration = 40000; // 40 segundos para recorrer el campo
-        
+
         const animateCamera = () => {
             if (!this.cinematicActive) return;
-            
+
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / animationDuration, 1);
-            
+
             // Movimiento circular lento alrededor del campo
             const angle = progress * Math.PI * 2;
             const radius = 25;
             const height = 8 + Math.sin(progress * Math.PI * 4) * 2;
-            
+
             this.camera.position.set(
                 Math.cos(angle) * radius,
                 height,
                 Math.sin(angle) * radius - 10
             );
-            
+
             this.camera.lookAt(0, 4, -38); // Siempre mirando hacia la muñeca
-            
+
             if (progress < 1) {
                 requestAnimationFrame(animateCamera);
             }
         };
-        
+
         requestAnimationFrame(animateCamera);
     }
 
     startAnnouncementAudio() {
         console.log('🔊 INICIANDO VIDEO DESDE LA CORNETA');
-        
+
         // Crear video directamente y reproducir
-        this.createCornetaVideo();
-        
-        // Iniciar subtítulos al mismo tiempo
+        this.createCornetaVideo();        // Iniciar subtítulos al mismo tiempo
         this.startSubtitleSystem();
-        
+
         // Finalizar después de 38 segundos
         setTimeout(() => {
             this.startActualGame();
         }, 38000);
     }
-    
+
     createCornetaVideo() {
         // Limpiar video anterior si existe
         if (this.cornetaVideo) {
             this.cornetaVideo.remove();
         }
-        
+
         // Crear elemento de video
         this.cornetaVideo = document.createElement('video');
         this.cornetaVideo.style.position = 'absolute';
@@ -1411,42 +1495,42 @@ class SquidGameSimulator {
         this.cornetaVideo.muted = false;
         this.cornetaVideo.volume = 1.0;
         this.cornetaVideo.preload = 'auto';
-        
+
         // URL del video de Dropbox
         this.cornetaVideo.src = 'https://www.dropbox.com/scl/fi/mydf0veox1hc3mrudxfck/copy_D00D2D32-9E6E-45A6-8FD4-3563576E73CE.mov?rlkey=n3fjom9s21zgszd2n7c5vrvyz&st=yz2ze6h6&dl=1';
-        
+
         // Agregar al DOM
         document.body.appendChild(this.cornetaVideo);
-        
+
         // Eventos del video
         this.cornetaVideo.addEventListener('canplay', () => {
             console.log('✅ Video listo, reproduciendo desde corneta...');
             this.playCornetaVideo();
         });
-        
+
         this.cornetaVideo.addEventListener('play', () => {
             console.log('🔊 ¡VIDEO SONANDO DESDE LA CORNETA!');
             this.activateSpeakerVisuals();
         });
-        
+
         this.cornetaVideo.addEventListener('error', (e) => {
             console.error('❌ Error con video:', e);
         });
-        
+
         this.cornetaVideo.addEventListener('ended', () => {
             console.log('🔇 Video terminado');
             this.cleanupCornetaVideo();
         });
-        
+
         // Cargar video
         this.cornetaVideo.load();
     }
-    
+
     playCornetaVideo() {
         if (!this.cornetaVideo) return;
-        
+
         const playPromise = this.cornetaVideo.play();
-        
+
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
@@ -1464,7 +1548,7 @@ class SquidGameSimulator {
                 });
         }
     }
-    
+
     activateSpeakerVisuals() {
         // Solo efectos visuales en la corneta, NO modificar el audio
         if (this.speakerNearDoll) {
@@ -1482,7 +1566,7 @@ class SquidGameSimulator {
                     setTimeout(blinkLED, i * 50);
                 }
             }
-            
+
             // Pequeña vibración del altavoz
             const originalPos = this.speakerNearDoll.position.clone();
             const vibrateLoop = () => {
@@ -1497,7 +1581,7 @@ class SquidGameSimulator {
             vibrateLoop();
         }
     }
-    
+
     cleanupCornetaVideo() {
         if (this.cornetaVideo) {
             this.cornetaVideo.pause();
@@ -1505,7 +1589,7 @@ class SquidGameSimulator {
             this.cornetaVideo = null;
         }
     }
-    
+
     cleanupAnnouncementVideo() {
         if (this.announcementVideo) {
             this.announcementVideo.pause();
@@ -1515,7 +1599,7 @@ class SquidGameSimulator {
             }
             this.announcementVideo = null;
         }
-        
+
         // Limpiar fuente de audio
         if (this.audioSource) {
             try {
@@ -1525,15 +1609,15 @@ class SquidGameSimulator {
                 console.log('Audio source ya desconectado');
             }
         }
-        
+
         console.log('🔇 Audio de corneta detenido y limpiado');
     }
-    
+
     createImpulseResponse(duration, decay, reverse) {
         const sampleRate = this.audioContext.sampleRate;
         const length = sampleRate * duration;
         const impulse = this.audioContext.createBuffer(2, length, sampleRate);
-        
+
         for (let channel = 0; channel < 2; channel++) {
             const channelData = impulse.getChannelData(channel);
             for (let i = 0; i < length; i++) {
@@ -1549,26 +1633,26 @@ class SquidGameSimulator {
         this.updateLightState('green');
         this.makeAnnouncement("¡AHORA SÍ PUEDEN COMENZAR!");
         this.startGameLoop();
-        
+
         // Limpiar completamente el sistema de audio y subtítulos
         if (this.announcementAudio) {
             this.announcementAudio.pause();
             this.announcementAudio.currentTime = 0;
             this.announcementAudio = null;
         }
-        
+
         // Limpiar video de anuncio
         this.cleanupAnnouncementVideo();
-        
+
         // Limpiar subtítulos de forma segura
         this.cleanupSubtitles();
-        
+
         // Limpiar cualquier animación pendiente
         if (this.typeWriterInterval) {
             clearInterval(this.typeWriterInterval);
             this.typeWriterInterval = null;
         }
-        
+
         // Remover todos los contenedores de subtítulos
         const allSubtitleContainers = document.querySelectorAll('[id*="subtitle-container"]');
         allSubtitleContainers.forEach(container => {
@@ -1580,27 +1664,27 @@ class SquidGameSimulator {
 
     startSubtitleSystem() {
         console.log('Iniciando sistema de subtítulos...');
-        
+
         // Limpiar cualquier subtítulo previo
         const existingContainer = document.getElementById('subtitle-container-game');
         if (existingContainer) {
             existingContainer.remove();
         }
-        
+
         // Crear contenedor de subtítulos mejorado
         const subtitleContainer = document.createElement('div');
         subtitleContainer.id = 'subtitle-container-game';
         subtitleContainer.className = 'subtitle-container';
         subtitleContainer.innerHTML = '<div id="subtitle-text-game" class="subtitle-text"></div>';
         document.getElementById('ui-overlay').appendChild(subtitleContainer);
-        
+
         this.currentSubtitleIndex = 0;
         this.subtitleStartTime = Date.now();
-        
+
         // Mostrar subtítulos uno por uno con timing correcto
         this.showSequentialSubtitles();
     }
-    
+
     showSequentialSubtitles() {
         this.subtitles.forEach((subtitle, index) => {
             setTimeout(() => {
@@ -1608,7 +1692,7 @@ class SquidGameSimulator {
                     this.displaySubtitle(subtitle.text);
                 }
             }, subtitle.start * 1000);
-            
+
             // Ocultar subtítulo al final de su tiempo
             setTimeout(() => {
                 if (this.gameState === 'waiting_for_announcement') {
@@ -1617,23 +1701,23 @@ class SquidGameSimulator {
             }, subtitle.end * 1000);
         });
     }
-    
+
     displaySubtitle(text) {
         const subtitleContainer = document.getElementById('subtitle-container-game');
         const subtitleText = document.getElementById('subtitle-text-game');
-        
+
         if (!subtitleContainer || !subtitleText) return;
-        
+
         console.log('Mostrando subtítulo:', text);
-        
+
         subtitleText.textContent = text;
         subtitleContainer.classList.add('show-subtitle');
         subtitleContainer.style.display = 'block';
-        
+
         // Efecto de aparición
         subtitleText.style.opacity = '0';
         subtitleText.style.transform = 'translateY(20px)';
-        
+
         setTimeout(() => {
             if (subtitleText) {
                 subtitleText.style.transition = 'all 0.5s ease';
@@ -1642,32 +1726,32 @@ class SquidGameSimulator {
             }
         }, 100);
     }
-    
+
     hideSubtitle() {
         const subtitleContainer = document.getElementById('subtitle-container-game');
         const subtitleText = document.getElementById('subtitle-text-game');
-        
+
         if (!subtitleContainer || !subtitleText) return;
-        
+
         subtitleText.style.transition = 'all 0.3s ease';
         subtitleText.style.opacity = '0';
         subtitleText.style.transform = 'translateY(-10px)';
-        
+
         setTimeout(() => {
             if (subtitleContainer) {
                 subtitleContainer.classList.remove('show-subtitle');
             }
         }, 300);
     }
-    
+
     cleanupSubtitles() {
         console.log('Limpiando subtítulos...');
-        
+
         if (this.subtitleInterval) {
             clearInterval(this.subtitleInterval);
             this.subtitleInterval = null;
         }
-        
+
         const container = document.getElementById('subtitle-container-game');
         if (container) {
             container.style.transition = 'opacity 0.5s ease';
@@ -1686,11 +1770,11 @@ class SquidGameSimulator {
     animateSubtitleText() {
         const subtitleText = document.getElementById('subtitle-text');
         if (!subtitleText) return;
-        
+
         // Efecto de escritura tipo máquina
         const text = subtitleText.textContent;
         subtitleText.textContent = '';
-        
+
         let i = 0;
         const typeWriter = setInterval(() => {
             if (i < text.length) {
@@ -1704,20 +1788,20 @@ class SquidGameSimulator {
 
     skipCinematic() {
         this.cinematicActive = false;
-        
+
         if (this.subtitleInterval) {
             clearInterval(this.subtitleInterval);
         }
-        
+
         if (this.cinematicVideo) {
             this.cinematicVideo.pause();
             this.cinematicVideo.currentTime = 0;
         }
-        
+
         // Restaurar posición de cámara del jugador
         this.camera.position.set(0, 1.8, 42);
         this.camera.rotation.set(0, 0, 0);
-        
+
         const cinematicIntro = document.getElementById('cinematic-intro');
         if (cinematicIntro) {
             cinematicIntro.style.opacity = '0';
