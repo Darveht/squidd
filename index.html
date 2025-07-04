@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luz Roja, Luz Verde - Simulador 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="squid-logo">🦑</div>
+            <h1>SQUID GAME</h1>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p>Cargando simulador 3D...</p>
+        </div>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <div id="ui-overlay">
+            <div class="top-ui">
+                <div class="level-indicator">
+                    <div class="level-label">SQUID GAME</div>
+                    <div class="level-number">NIVEL 1</div>
+                    <div class="level-name">LUZ ROJA, LUZ VERDE</div>
+                </div>
+                <div class="timer-container">
+                    <div class="timer-label">TIEMPO RESTANTE</div>
+                    <div id="timer">120</div>
+                </div>
+                <div class="players-count">
+                    <div class="players-label">JUGADORES</div>
+                    <div id="players-alive">456</div>
+                </div>
+            </div>
+
+            <div class="announcement-container" id="announcement-container">
+                <div class="speaker-icon">📢</div>
+                <div class="announcement-text" id="announcement-text"></div>
+            </div>
+
+            <div class="center-ui">
+                <div id="game-status" class="game-status hidden">
+                    <div class="status-text"></div>
+                </div>
+                
+                <div id="light-indicator" class="light-indicator">
+                    <div class="light green"></div>
+                    <div class="light-text">LUZ VERDE</div>
+                </div>
+            </div>
+
+            <div class="bottom-ui">
+                <div class="controls-hint">
+                    <div class="control-item">
+                        <span class="key">WASD</span> Mover
+                    </div>
+                    <div class="control-item">
+                        <span class="key">SHIFT</span> Correr
+                    </div>
+                    <div class="control-item">
+                        <span class="key">MOUSE</span> Mirar
+                    </div>
+                </div>
+            </div>
+
+            <div id="game-over-screen" class="game-over hidden">
+                <div class="game-over-content">
+                    <h1 id="game-result">ELIMINADO</h1>
+                    <p id="game-message">Te moviste durante luz roja</p>
+                    <button id="restart-btn" class="modern-btn">INTENTAR DE NUEVO</button>
+                </div>
+            </div>
+
+            <div id="victory-screen" class="victory hidden">
+                <div class="victory-content">
+                    <h1>¡GANASTE!</h1>
+                    <p>Has sobrevivido al primer juego</p>
+                    <div class="victory-stats">
+                        <div class="stat">
+                            <span class="stat-label">Tiempo usado:</span>
+                            <span id="time-used">--</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Supervivientes:</span>
+                            <span id="survivors">--</span>
+                        </div>
+                    </div>
+                    <button id="play-again-btn" class="modern-btn">JUGAR DE NUEVO</button>
+                </div>
+            </div>
+        </div>
+        
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
