@@ -29,9 +29,13 @@ class SquidGameSimulator {
 
         // Configuraciones del usuario
         this.settings = {
-            announcements: true,
-            visualAnnouncements: true,
-            eliminationEffects: true
+            announcements: false,
+            visualAnnouncements: false,
+            eliminationEffects: true,
+            showUI: false,
+            showLevelIndicator: false,
+            showTimer: false,
+            showPlayersCount: false
         };
 
 
@@ -877,6 +881,30 @@ class SquidGameSimulator {
             this.settings.eliminationEffects = e.target.checked;
             this.saveSettings();
         });
+
+        document.getElementById('toggle-ui').addEventListener('change', (e) => {
+            this.settings.showUI = e.target.checked;
+            this.updateUIVisibility();
+            this.saveSettings();
+        });
+
+        document.getElementById('toggle-level-indicator').addEventListener('change', (e) => {
+            this.settings.showLevelIndicator = e.target.checked;
+            this.updateUIVisibility();
+            this.saveSettings();
+        });
+
+        document.getElementById('toggle-timer').addEventListener('change', (e) => {
+            this.settings.showTimer = e.target.checked;
+            this.updateUIVisibility();
+            this.saveSettings();
+        });
+
+        document.getElementById('toggle-players-count').addEventListener('change', (e) => {
+            this.settings.showPlayersCount = e.target.checked;
+            this.updateUIVisibility();
+            this.saveSettings();
+        });
     }
 
     loadSettings() {
@@ -889,10 +917,33 @@ class SquidGameSimulator {
         document.getElementById('toggle-announcements').checked = this.settings.announcements;
         document.getElementById('toggle-visual-announcements').checked = this.settings.visualAnnouncements;
         document.getElementById('toggle-elimination-effects').checked = this.settings.eliminationEffects;
+        document.getElementById('toggle-ui').checked = this.settings.showUI;
+        document.getElementById('toggle-level-indicator').checked = this.settings.showLevelIndicator;
+        document.getElementById('toggle-timer').checked = this.settings.showTimer;
+        document.getElementById('toggle-players-count').checked = this.settings.showPlayersCount;
+
+        // Aplicar visibilidad inicial
+        this.updateUIVisibility();
     }
 
     saveSettings() {
         localStorage.setItem('squidGameSettings', JSON.stringify(this.settings));
+    }
+
+    updateUIVisibility() {
+        const topUI = document.querySelector('.top-ui');
+        const levelIndicator = document.querySelector('.level-indicator');
+        const timerContainer = document.querySelector('.timer-container');
+        const playersCount = document.querySelector('.players-count');
+
+        if (this.settings.showUI) {
+            topUI.style.display = 'flex';
+            levelIndicator.style.display = this.settings.showLevelIndicator ? 'block' : 'none';
+            timerContainer.style.display = this.settings.showTimer ? 'block' : 'none';
+            playersCount.style.display = this.settings.showPlayersCount ? 'block' : 'none';
+        } else {
+            topUI.style.display = 'none';
+        }
     }
 
     generatePlayerProfiles() {
