@@ -546,8 +546,8 @@ class SquidGameSimulator {
         this.cameraSensitivity = 0.002;
         this.cameraSmoothing = 0.1;
 
-        // Variables para touch controls
-        this.isTouchDevice = 'ontouchstart' in window;
+        // Variables para touch controls - detección mejorada para iPhone
+        this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
         this.touchStartX = 0;
         this.touchStartY = 0;
         this.touchRotating = false;
@@ -579,9 +579,16 @@ class SquidGameSimulator {
             }
         });
 
-        // Touch controls para móvil
+        // Touch controls para móvil - forzar en dispositivos táctiles
         if (this.isTouchDevice) {
             this.setupTouchControls();
+            // Forzar mostrar controles en dispositivos móviles
+            setTimeout(() => {
+                const joystick = document.getElementById('virtual-joystick');
+                const runButton = document.getElementById('run-button');
+                if (joystick) joystick.style.display = 'flex';
+                if (runButton) runButton.style.display = 'flex';
+            }, 100);
         }
 
         // UI Event Listeners
@@ -637,10 +644,10 @@ class SquidGameSimulator {
 
     createVirtualJoystick() {
         const joystickHTML = `
-            <div id="virtual-joystick" class="virtual-joystick">
+            <div id="virtual-joystick" class="virtual-joystick" style="display: flex;">
                 <div id="joystick-knob" class="joystick-knob"></div>
             </div>
-            <div id="run-button" class="run-button">🏃‍♂️</div>
+            <div id="run-button" class="run-button" style="display: flex;">🏃‍♂️</div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', joystickHTML);
