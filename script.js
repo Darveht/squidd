@@ -217,11 +217,11 @@ class SquidGameSimulator {
     }
 
     createWalls() {
-        const wallHeight = 8;
+        const wallHeight = 12; // Taller walls
         const wallThickness = 0.5;
 
-        // Wall material - sky color
-        const wallMaterial = new THREE.MeshLambertMaterial({ color: 0x87CEEB });
+        // Wall material - beige/off-white color
+        const wallMaterial = new THREE.MeshLambertMaterial({ color: 0xF5F5DC }); // Beige
 
         // Left wall
         const leftWallGeometry = new THREE.BoxGeometry(wallThickness, wallHeight, 100);
@@ -255,11 +255,18 @@ class SquidGameSimulator {
         frontWallTop.position.set(0, wallHeight*0.75, 50);
         this.scene.add(frontWallTop);
 
-        // Door
-        const doorMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
-        const door = new THREE.Mesh(new THREE.BoxGeometry(20, wallHeight/2, wallThickness), doorMaterial);
-        door.position.set(0, wallHeight/4, 50);
+        // Entrance door (black metal)
+        const doorMaterial = new THREE.MeshLambertMaterial({ color: 0x1C1C1C });
+        const door = new THREE.Mesh(new THREE.BoxGeometry(8, wallHeight*0.6, wallThickness*1.2), doorMaterial);
+        door.position.set(-15, wallHeight*0.3, 50);
         this.scene.add(door);
+
+        // Door handle
+        const handleGeometry = new THREE.SphereGeometry(0.2);
+        const handleMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 });
+        const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+        handle.position.set(-12, wallHeight*0.3, 50.1);
+        this.scene.add(handle);
 
         // Add desert grass in corners
         this.createDesertGrass();
@@ -304,95 +311,184 @@ class SquidGameSimulator {
         createGrassPatch(20, 20, dryGrassMaterial);
     }
 
+    createSpeaker() {
+        // Hidden speaker on the wall
+        const speakerGeometry = new THREE.BoxGeometry(2, 1, 0.3);
+        const speakerMaterial = new THREE.MeshLambertMaterial({ color: 0x2F4F4F });
+        const speaker = new THREE.Mesh(speakerGeometry, speakerMaterial);
+        speaker.position.set(0, 10, -49.5);
+        this.scene.add(speaker);
+
+        // Speaker grille
+        const grilleGeometry = new THREE.PlaneGeometry(1.5, 0.8);
+        const grilleMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const grille = new THREE.Mesh(grilleGeometry, grilleMaterial);
+        grille.position.set(0, 10, -49.3);
+        this.scene.add(grille);
+    }
+
     createLines() {
         const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
 
-        // Start line
+        // Start line (thicker and more visible)
         const startLine = new THREE.Mesh(
-            new THREE.BoxGeometry(50, 0.1, 0.5),
+            new THREE.BoxGeometry(50, 0.15, 0.8),
             lineMaterial
         );
-        startLine.position.set(0, 0.05, 45);
+        startLine.position.set(0, 0.08, 40);
         this.scene.add(startLine);
+
+        // Player position markers on start line
+        for (let i = -20; i <= 20; i += 4) {
+            const marker = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.1, 2),
+                lineMaterial
+            );
+            marker.position.set(i, 0.05, 39);
+            this.scene.add(marker);
+        }
 
         // Finish line
         const finishLine = new THREE.Mesh(
-            new THREE.BoxGeometry(50, 0.1, 0.5),
+            new THREE.BoxGeometry(50, 0.15, 0.8),
             lineMaterial
         );
-        finishLine.position.set(0, 0.05, -45);
+        finishLine.position.set(0, 0.08, -44);
         this.scene.add(finishLine);
     }
 
     createTree() {
-        // Tree trunk
-        const trunkGeometry = new THREE.CylinderGeometry(0.5, 0.8, 8);
-        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        // Tree trunk - centered and larger for dead tree look
+        const trunkGeometry = new THREE.CylinderGeometry(0.8, 1.2, 10);
+        const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 }); // Darker brown
         const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-        trunk.position.set(-15, 4, -40);
+        trunk.position.set(0, 5, -42); // Centered on field, slightly in front of back wall
         trunk.castShadow = true;
         this.scene.add(trunk);
 
-        // Tree branches (bare)
-        for (let i = 0; i < 8; i++) {
-            const branchGeometry = new THREE.CylinderGeometry(0.1, 0.2, 3);
+        // Dead/bare branches extending outward
+        for (let i = 0; i < 12; i++) {
+            const branchGeometry = new THREE.CylinderGeometry(0.05, 0.15, 2 + Math.random() * 2);
             const branch = new THREE.Mesh(branchGeometry, trunkMaterial);
-            const angle = (i / 8) * Math.PI * 2;
+            const angle = (i / 12) * Math.PI * 2;
+            const height = 7 + Math.random() * 3;
+            
             branch.position.set(
-                -15 + Math.cos(angle) * 2,
-                6 + Math.random() * 2,
-                -40 + Math.sin(angle) * 2
+                Math.cos(angle) * (1 + Math.random() * 0.5),
+                height,
+                -42 + Math.sin(angle) * 0.3
             );
-            branch.rotation.z = Math.random() * 0.5;
+            
+            // Make branches point outward and upward
+            branch.rotation.z = Math.cos(angle) * 0.8 + (Math.random() - 0.5) * 0.4;
+            branch.rotation.x = Math.sin(angle) * 0.8 + (Math.random() - 0.5) * 0.4;
             branch.castShadow = true;
             this.scene.add(branch);
+        }
+
+        // Add some smaller twigs
+        for (let i = 0; i < 20; i++) {
+            const twigGeometry = new THREE.CylinderGeometry(0.02, 0.05, 0.5 + Math.random() * 1);
+            const twig = new THREE.Mesh(twigGeometry, trunkMaterial);
+            const angle = Math.random() * Math.PI * 2;
+            
+            twig.position.set(
+                Math.cos(angle) * (1.5 + Math.random() * 1),
+                8 + Math.random() * 2,
+                -42 + Math.sin(angle) * 0.5
+            );
+            
+            twig.rotation.z = (Math.random() - 0.5) * Math.PI;
+            twig.rotation.x = (Math.random() - 0.5) * Math.PI;
+            this.scene.add(twig);
         }
     }
 
     createBackgroundMural() {
-        const muralGeometry = new THREE.PlaneGeometry(60, 20);
+        const muralGeometry = new THREE.PlaneGeometry(50, 25);
         const muralCanvas = document.createElement('canvas');
         muralCanvas.width = 512;
-        muralCanvas.height = 171;
+        muralCanvas.height = 256;
         const ctx = muralCanvas.getContext('2d');
 
-        // Sky
-        const gradient = ctx.createLinearGradient(0, 0, 0, 171);
-        gradient.addColorStop(0, '#87CEEB');
-        gradient.addColorStop(1, '#98FB98');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 512, 171);
+        // Clear blue sky
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, 120);
+        skyGradient.addColorStop(0, '#87CEEB');
+        skyGradient.addColorStop(1, '#B0E0E6');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, 512, 120);
 
-        // Simple hills
-        ctx.fillStyle = '#228B22';
+        // Rolling hills in background
+        ctx.fillStyle = '#90EE90';
         ctx.beginPath();
-        ctx.moveTo(0, 171);
-        for (let x = 0; x <= 512; x += 50) {
-            ctx.lineTo(x, 120 + Math.sin(x * 0.01) * 20);
+        ctx.moveTo(0, 256);
+        for (let x = 0; x <= 512; x += 30) {
+            ctx.lineTo(x, 140 + Math.sin(x * 0.02) * 15);
         }
-        ctx.lineTo(512, 171);
+        ctx.lineTo(512, 256);
         ctx.closePath();
         ctx.fill();
 
-        // Simple houses
-        ctx.fillStyle = '#FF6347';
-        ctx.fillRect(50, 90, 60, 40);
-        ctx.fillRect(150, 100, 50, 30);
-        ctx.fillRect(300, 85, 70, 45);
+        // Green fields with wheat
+        ctx.fillStyle = '#9ACD32';
+        ctx.fillRect(0, 180, 512, 76);
 
-        // Roofs
-        ctx.fillStyle = '#8B4513';
+        // Add wheat pattern
+        ctx.fillStyle = '#DAA520';
+        for (let x = 20; x < 512; x += 40) {
+            for (let y = 190; y < 240; y += 20) {
+                ctx.fillRect(x, y, 2, 8);
+                ctx.fillRect(x + 10, y + 5, 2, 8);
+                ctx.fillRect(x + 20, y + 2, 2, 8);
+            }
+        }
+
+        // Korean style house with red roof
+        ctx.fillStyle = '#CD853F'; // Tan walls
+        ctx.fillRect(200, 120, 100, 60);
+        
+        // Red curved roof
+        ctx.fillStyle = '#DC143C';
         ctx.beginPath();
-        ctx.moveTo(40, 90);
-        ctx.lineTo(80, 70);
-        ctx.lineTo(120, 90);
+        ctx.moveTo(190, 120);
+        ctx.quadraticCurveTo(250, 100, 310, 120);
+        ctx.lineTo(300, 125);
+        ctx.quadraticCurveTo(250, 105, 200, 125);
+        ctx.closePath();
+        ctx.fill();
+
+        // House details
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(225, 140, 20, 25); // Door
+        ctx.fillStyle = '#4682B4';
+        ctx.fillRect(210, 135, 12, 12); // Window
+        ctx.fillRect(280, 135, 12, 12); // Window
+
+        // Small flowers scattered
+        ctx.fillStyle = '#FF69B4';
+        for (let i = 0; i < 30; i++) {
+            const x = Math.random() * 512;
+            const y = 200 + Math.random() * 40;
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Additional small house
+        ctx.fillStyle = '#F4A460';
+        ctx.fillRect(350, 135, 60, 45);
+        ctx.fillStyle = '#B22222';
+        ctx.beginPath();
+        ctx.moveTo(345, 135);
+        ctx.lineTo(380, 115);
+        ctx.lineTo(415, 135);
         ctx.closePath();
         ctx.fill();
 
         const muralTexture = new THREE.CanvasTexture(muralCanvas);
         const muralMaterial = new THREE.MeshLambertMaterial({ map: muralTexture });
         const mural = new THREE.Mesh(muralGeometry, muralMaterial);
-        mural.position.set(0, 10, -49.5);
+        mural.position.set(0, 12.5, -49.8); // Positioned behind tree and doll
         this.scene.add(mural);
     }
 
@@ -505,8 +601,9 @@ class SquidGameSimulator {
         rightArm.rotation.z = -Math.PI / 6;
         dollGroup.add(rightArm);
 
-        dollGroup.position.set(-15, 0, -35); // In front of the tree
+        dollGroup.position.set(0, 0, -38); // Centered, directly in front of the tree
         dollGroup.scale.set(1.2, 1.2, 1.2);
+        dollGroup.rotation.y = Math.PI; // Face towards the starting line
         this.scene.add(dollGroup);
         this.doll = dollGroup;
     }
@@ -530,11 +627,14 @@ class SquidGameSimulator {
             this.guards.push(guard);
         };
 
-        // Create guards around the doll (in front of the tree)
-        createGuard(-18, -35 - guardSpacing);
-        createGuard(-18, -35 + guardSpacing);
-        createGuard(-12, -35 - guardSpacing);
-        createGuard(-12, -35 + guardSpacing);
+        // Create guards around the centered area
+        createGuard(-8, -35);
+        createGuard(8, -35);
+        createGuard(-15, -30);
+        createGuard(15, -30);
+
+        // Add speaker on the wall
+        this.createSpeaker();
     }
 
     setupControls() {
@@ -1039,7 +1139,9 @@ class SquidGameSimulator {
 
     animateDollTurn(targetRotation) {
         const startRotation = this.doll.rotation.y;
-        const rotationDiff = targetRotation - startRotation;
+        // Adjust target rotation since doll now faces opposite direction initially
+        const adjustedTarget = targetRotation === 0 ? Math.PI : 0;
+        const rotationDiff = adjustedTarget - startRotation;
         const duration = 500; // milliseconds
         const startTime = performance.now();
 
