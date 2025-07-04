@@ -931,6 +931,31 @@ body {
     }
 }
 
+.violation-alert {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.5rem;
+    color: #FF0000;
+    font-weight: 900;
+    text-shadow: 0 0 30px #FF0000;
+    margin-bottom: 1rem;
+    letter-spacing: 2px;
+    animation: targeting-pulse 0.8s infinite;
+    border: 3px solid #FF0000;
+    padding: 1rem 2rem;
+    background: rgba(255, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.countdown-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    color: #FFD700;
+    font-weight: 600;
+    margin-top: 1rem;
+    letter-spacing: 1px;
+}
+}
+
 @keyframes targeting-pulse {
     0%, 100% {
         text-shadow: 0 0 20px #FF4400;

@@ -2213,6 +2213,7 @@ class SquidGameSimulator {
 
         // Check for movement during red light (solo durante el juego activo)
         if (this.gameState === 'playing' && moved && this.lightState === 'red' && this.dollLookingBack) {
+            console.log('🚨 JUGADOR DETECTADO MOVIÉNDOSE DURANTE LUZ ROJA!');
             this.triggerEliminationSequence();
             return;
         }
@@ -2425,34 +2426,53 @@ class SquidGameSimulator {
     }
 
     triggerEliminationSequence() {
+        console.log('🎯 INICIANDO SECUENCIA DE ELIMINACIÓN');
+        
+        // Cambiar estado para pausar el juego
         this.gameState = 'eliminating';
         
-        // Crear efecto de cámara lenta
+        // Pausar movimiento del jugador
+        this.keys = {}; // Limpiar todas las teclas
+        
+        // Anuncio de detección
+        this.makeAnnouncement("¡MOVIMIENTO DETECTADO DURANTE LUZ ROJA!");
+        
+        // Crear efecto de cámara lenta inmediatamente
         this.startSlowMotionEffect();
         
-        // Activar los agujeros de disparo
-        this.activateShootingHoles();
+        // Activar sistema de targeting después de 0.5 segundos
+        setTimeout(() => {
+            this.activateShootingHoles();
+            this.createLaserTargeting();
+        }, 500);
         
-        // Crear efecto de mira láser convergente
-        this.createLaserTargeting();
-        
-        // Después de 2 segundos, disparar con efectos mejorados
+        // Ejecutar disparos después de 3 segundos (más tiempo para ver efectos)
         setTimeout(() => {
             this.executeEnhancedShootingSequence();
-        }, 2000);
+        }, 3000);
     }
 
     startSlowMotionEffect() {
-        // Crear overlay de cámara lenta
+        console.log('⏱️ Iniciando efecto de cámara lenta');
+        
+        // Crear overlay de cámara lenta más dramático
         const slowMotionOverlay = document.createElement('div');
         slowMotionOverlay.className = 'slow-motion-overlay';
         slowMotionOverlay.innerHTML = `
-            <div class="targeting-text">🎯 OBJETIVO ADQUIRIDO</div>
+            <div class="violation-alert">⚠️ VIOLACIÓN DE REGLAS DETECTADA ⚠️</div>
+            <div class="targeting-text">🎯 SISTEMA DE ELIMINACIÓN ACTIVADO</div>
             <div class="elimination-countdown">3</div>
+            <div class="countdown-label">ELIMINACIÓN EN:</div>
         `;
         document.body.appendChild(slowMotionOverlay);
 
-        // Countdown de eliminación
+        // Sonido de alerta
+        if (this.audioContext) {
+            this.playSound(1000, 0.3, 'square');
+            setTimeout(() => this.playSound(1200, 0.3, 'square'), 300);
+        }
+
+        // Countdown de eliminación más lento
         let countdown = 3;
         const countdownElement = slowMotionOverlay.querySelector('.elimination-countdown');
         
@@ -2461,30 +2481,53 @@ class SquidGameSimulator {
             if (countdown > 0) {
                 countdownElement.textContent = countdown;
                 countdownElement.style.color = countdown === 1 ? '#FF0000' : '#FFD700';
+                
+                // Sonido de countdown
+                if (this.audioContext) {
+                    this.playSound(800 + countdown * 200, 0.2, 'square');
+                }
             } else {
                 countdownElement.textContent = 'FUEGO';
                 countdownElement.style.color = '#FF0000';
+                countdownElement.style.fontSize = '10rem';
+                
+                // Sonido final
+                if (this.audioContext) {
+                    this.playSound(1500, 0.5, 'sawtooth');
+                }
+                
                 clearInterval(countdownInterval);
+                
+                // Mantener visible un poco más
                 setTimeout(() => {
-                    slowMotionOverlay.remove();
-                }, 500);
+                    if (slowMotionOverlay.parentNode) {
+                        slowMotionOverlay.style.opacity = '0';
+                        setTimeout(() => slowMotionOverlay.remove(), 500);
+                    }
+                }, 1000);
             }
-        }, 600);
+        }, 800); // Más lento para dar tiempo a ver
+        
+        // Guardar referencia para limpieza
+        this.slowMotionOverlay = slowMotionOverlay;
     }
 
     createLaserTargeting() {
-        // Crear múltiples láseres de mira desde diferentes ángulos
+        console.log('🔴 Creando sistema de mira láser');
+        
+        // Crear múltiples láseres de mira más visibles
         this.laserSights = [];
         
         this.shootingHoles.forEach((hole, index) => {
-            if (index < 6) { // Usar 6 agujeros para crear efecto 360°
-                const laserGeometry = new THREE.CylinderGeometry(0.01, 0.01, 1);
+            if (index < 8) { // Usar todos los agujeros disponibles
+                // Crear láser más grueso y brillante
+                const laserGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1);
                 const laserMaterial = new THREE.MeshBasicMaterial({ 
                     color: 0xFF0000,
                     emissive: 0xFF0000,
-                    emissiveIntensity: 1,
+                    emissiveIntensity: 2,
                     transparent: true,
-                    opacity: 0.8
+                    opacity: 0.9
                 });
                 const laser = new THREE.Mesh(laserGeometry, laserMaterial);
                 
@@ -2508,16 +2551,37 @@ class SquidGameSimulator {
                     endPos: playerPos
                 });
                 
-                // Animación de parpadeo del láser
-                let opacity = 0.8;
+                // Crear punto de mira en el jugador
+                const targetDot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.1),
+                    new THREE.MeshBasicMaterial({ 
+                        color: 0xFF0000,
+                        emissive: 0xFF0000,
+                        emissiveIntensity: 3
+                    })
+                );
+                targetDot.position.copy(playerPos);
+                targetDot.position.y += Math.random() * 0.5; // Variar altura
+                this.scene.add(targetDot);
+                this.laserSights.push({ mesh: targetDot });
+                
+                // Animación de parpadeo más dramática
+                let intensity = 2;
                 const blinkLaser = () => {
                     if (this.gameState === 'eliminating') {
-                        opacity = opacity > 0.3 ? 0.2 : 0.8;
-                        laser.material.opacity = opacity;
-                        setTimeout(blinkLaser, 100);
+                        intensity = intensity > 0.5 ? 0.3 : 2;
+                        laser.material.emissiveIntensity = intensity;
+                        targetDot.material.emissiveIntensity = intensity * 1.5;
+                        
+                        // Sonido de targeting
+                        if (Math.random() < 0.3 && this.audioContext) {
+                            this.playSound(1000 + Math.random() * 500, 0.1, 'sine');
+                        }
+                        
+                        setTimeout(blinkLaser, 150);
                     }
                 };
-                setTimeout(blinkLaser, index * 100);
+                setTimeout(blinkLaser, index * 50);
             }
         });
     }
@@ -2554,31 +2618,39 @@ class SquidGameSimulator {
     executeEnhancedShootingSequence() {
         console.log('🔫 Ejecutando secuencia de disparo mejorada...');
         
-        // Limpiar láseres de mira
-        this.cleanupLaserSights();
+        // Anuncio final
+        this.makeAnnouncement("¡SECUENCIA DE ELIMINACIÓN INICIADA!");
+        
+        // Limpiar láseres de mira después de 1 segundo
+        setTimeout(() => {
+            this.cleanupLaserSights();
+        }, 1000);
         
         // Usar TODOS los agujeros para crear efecto 360°
-        const activeHoles = this.shootingHoles.slice(0, 6); // 6 agujeros para cobertura completa
+        const activeHoles = this.shootingHoles.slice(0, 8); // Usar todos los agujeros
         
-        // Crear efecto de destello masivo
-        this.createMassiveMuzzleFlash();
-        
-        // Disparos simultáneos desde múltiples ángulos
+        // Disparos escalonados para mayor drama
         activeHoles.forEach((hole, index) => {
             setTimeout(() => {
+                console.log(`🎯 Disparo ${index + 1} de ${activeHoles.length}`);
                 this.createEnhanced360BulletTrail(hole, index);
-            }, index * 50); // Disparos más rápidos y consecutivos
+                
+                // Sonido individual de disparo
+                if (this.audioContext) {
+                    this.playSound(1000 + index * 100, 0.3, 'square');
+                }
+            }, index * 200); // Más tiempo entre disparos para verlos mejor
         });
         
-        // Crear efecto de impactos múltiples
+        // Crear efecto de impactos después de que terminen los disparos
         setTimeout(() => {
             this.create360DegreeImpactEffect();
-        }, 600);
+        }, activeHoles.length * 200 + 500);
         
-        // Después de los efectos, matar al jugador
+        // Matar al jugador al final
         setTimeout(() => {
             this.killPlayerWithEnhancedAnimation();
-        }, 1200);
+        }, activeHoles.length * 200 + 1500);
     }
 
     cleanupLaserSights() {
