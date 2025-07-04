@@ -90,8 +90,9 @@ class SquidGameSimulator {
 
     setupScene() {
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.Fog(0x87CEEB, 30, 100);
-        this.scene.background = new THREE.Color(0x87CEEB);
+        this.scene.fog = new THREE.Fog(0x87CEEB, 50, 120);
+        // Eliminar el fondo blanco que cubría la pared pintada
+        this.scene.background = null;
     }
 
     setupCamera() {
@@ -939,10 +940,11 @@ class SquidGameSimulator {
         if (this.settings.showUI) {
             topUI.style.display = 'flex';
             levelIndicator.style.display = this.settings.showLevelIndicator ? 'block' : 'none';
-            timerContainer.style.display = this.settings.showTimer ? 'block' : 'none';
+            timerContainer.style.display = this.settings.showTimer ? 'block' : 'block';
             playersCount.style.display = this.settings.showPlayersCount ? 'block' : 'none';
         } else {
             topUI.style.display = 'none';
+            timerContainer.style.display = 'none';
         }
     }
 
@@ -1222,31 +1224,34 @@ class SquidGameSimulator {
     updatePlayer() {
         if (this.gameState !== 'playing') return;
 
-        const speed = this.keys['ShiftLeft'] || this.keys['ShiftRight'] ? 0.15 : 0.08;
+        const speed = this.keys['ShiftLeft'] || this.keys['ShiftRight'] ? 0.12 : 0.06;
         let moved = false;
         const previousPosition = { ...this.playerPosition };
 
-        // Movimiento simple y directo - igual para móvil y escritorio
+        // Movimiento suave y directo sin zigzag
+        let deltaX = 0;
+        let deltaZ = 0;
+
         if (this.keys['KeyW'] || this.keys['ArrowUp']) {
-            // Adelante = hacia la muñeca (reducir Z)
-            this.playerPosition.z -= speed;
+            deltaZ -= speed;
             moved = true;
         }
         if (this.keys['KeyS'] || this.keys['ArrowDown']) {
-            // Atrás = alejarse de la muñeca (aumentar Z)
-            this.playerPosition.z += speed;
+            deltaZ += speed;
             moved = true;
         }
         if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
-            // Izquierda = reducir X
-            this.playerPosition.x -= speed;
+            deltaX -= speed;
             moved = true;
         }
         if (this.keys['KeyD'] || this.keys['ArrowRight']) {
-            // Derecha = aumentar X
-            this.playerPosition.x += speed;
+            deltaX += speed;
             moved = true;
         }
+
+        // Aplicar movimiento suave
+        this.playerPosition.x += deltaX;
+        this.playerPosition.z += deltaZ;
 
         // Boundary checking
         this.playerPosition.x = Math.max(-24, Math.min(24, this.playerPosition.x));
@@ -1264,17 +1269,17 @@ class SquidGameSimulator {
             return;
         }
 
-        // Update player and camera positions
+        // Update player and camera positions suavemente
         this.player.position.set(this.playerPosition.x, 0, this.playerPosition.z);
         this.camera.position.set(this.playerPosition.x, 1.8, this.playerPosition.z);
 
         // Simple walking animation
         if (moved) {
-            const time = performance.now() * 0.01;
-            this.player.children[3].rotation.x = Math.sin(time) * 0.3; // Left leg
-            this.player.children[4].rotation.x = -Math.sin(time) * 0.3; // Right leg
-            this.player.children[1].rotation.x = Math.sin(time) * 0.2; // Left arm
-            this.player.children[2].rotation.x = -Math.sin(time) * 0.2; // Right arm
+            const time = performance.now() * 0.008;
+            this.player.children[3].rotation.x = Math.sin(time) * 0.2; // Left leg
+            this.player.children[4].rotation.x = -Math.sin(time) * 0.2; // Right leg
+            this.player.children[1].rotation.x = Math.sin(time) * 0.15; // Left arm
+            this.player.children[2].rotation.x = -Math.sin(time) * 0.15; // Right arm
         }
     }
 

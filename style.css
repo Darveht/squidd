@@ -104,7 +104,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 2rem;
+    gap: 3rem;
     align-items: center;
 }
 
@@ -224,7 +224,18 @@ body {
     line-height: 1.4;
 }
 
-.timer-container, .players-count {
+.timer-container {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(15px);
+    border: 3px solid #FFB6C1;
+    border-radius: 20px;
+    padding: 1.5rem 3rem;
+    text-align: center;
+    box-shadow: 0 15px 50px rgba(255, 182, 193, 0.4);
+    animation: timer-pulse 2s infinite;
+}
+
+.players-count {
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 255, 255, 0.1);
@@ -234,7 +245,16 @@ body {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.timer-label, .players-label {
+.timer-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 1rem;
+    color: #FFB6C1;
+    margin-bottom: 0.8rem;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px rgba(255, 182, 193, 0.6);
+}
+
+.players-label {
     font-family: 'Orbitron', monospace;
     font-size: 0.8rem;
     color: #ffffff;
@@ -242,12 +262,35 @@ body {
     letter-spacing: 2px;
 }
 
-#timer, #players-alive {
+#timer {
+    font-family: 'Orbitron', monospace;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #FFB6C1;
+    text-shadow: 0 0 20px rgba(255, 182, 193, 0.8), 0 0 40px rgba(255, 182, 193, 0.6);
+    background: linear-gradient(45deg, #FFB6C1, #FF69B4);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#players-alive {
     font-family: 'Orbitron', monospace;
     font-size: 2rem;
     font-weight: 700;
     color: #ff6b6b;
     text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+@keyframes timer-pulse {
+    0%, 100% { 
+        box-shadow: 0 15px 50px rgba(255, 182, 193, 0.4);
+        transform: scale(1);
+    }
+    50% { 
+        box-shadow: 0 20px 60px rgba(255, 182, 193, 0.6);
+        transform: scale(1.02);
+    }
 }
 
 .center-ui {
